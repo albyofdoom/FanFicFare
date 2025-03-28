@@ -147,6 +147,21 @@ class StoriesOnlineNetAdapter(BaseSiteAdapter):
                               postAction,
                               '','',''))
         data = self.post_request(postUrl,params,usecache=False)
+        # logger.debug(data)
+        while '<h2>Enter TOTP Code:</h2>' in data:
+            if self.totp:
+                logger.debug("Trying to TOTP with %s code."%self.totp)
+                params = {}
+                params['cmd'] = 'finishTotpVerification'
+                # google auth app at least shows "123 123", but site expects
+                # "123123".  Remove space if user enters it.
+                params['totp_code'] = self.totp.replace(' ','')
+                params['action'] = "continue"
+                data = self.post_request(postUrl,params,usecache=False)
+                # logger.debug(data)
+                self.totp = None
+            else:
+                raise exceptions.NeedTimedOneTimePassword(url)
 
         if self.needToLoginCheck(data):
             logger.info("Failed to login to URL %s as %s" % (loginUrl,
@@ -218,10 +233,8 @@ class StoriesOnlineNetAdapter(BaseSiteAdapter):
             ## both 's Page and ’s Page
             self.story.addToList('author',re.sub(r".s Page$","",stripHTML(a)))
 
-        # The rest of the metadata is within the article tag.
-        soup = soup.find('article')
-
         # Find the chapters:
+        # If multiple chapters, they are in "index-list" div.
         #    <a href="/s/00001/This-is-a-test/1">Chapter 1</a>
         #    <a href="/n/00001/This-is-a-test/1">Chapter 1</a>
         chapters = soup.select('div#index-list a[href*="/s/"],div#index-list a[href*="/n/"]')
@@ -234,6 +247,8 @@ class StoriesOnlineNetAdapter(BaseSiteAdapter):
         else:
             self.add_chapter(self.story.getMetadata('title'),self.story.getMetadata('storyUrl'))
 
+        # The rest of the metadata is within the article tag.
+        soup = soup.find('article')
 
         self.getStoryMetadataFromAuthorPage()
 
