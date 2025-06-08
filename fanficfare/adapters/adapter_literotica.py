@@ -249,7 +249,6 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         else:
             ## Multi-chapter stories.  AKA multi-part 'Story Series'.
             bn_antags = soup.select('div#tabpanel-info p.bn_an')
-
             # logger.debug(bn_antags)
             if bn_antags:
                 dates = []
@@ -262,8 +261,6 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
                 # logger.debug(dates)
                 self.story.setMetadata('datePublished', makeDate(dates[0], self.dateformat))
                 self.story.setMetadata('dateUpdated', makeDate(dates[1], self.dateformat))
-
-                
             ## bn_antags[2] contains "The author has completed this series." or "The author is still actively writing this series."
             ## I won't be surprised if this breaks later because of lang localization
             if "completed" in stripHTML(bn_antags[-1]):
@@ -383,13 +380,11 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         raw_page = self.get_request(url)
         page_soup = self.make_soup(raw_page)
         pages = page_soup.find('div',class_='l_bH')
-
         if not pages:
             pages = page_soup.select_one('div._pagination_h0sum_1')
         if not pages:
             pages = page_soup.select_one('div.clearfix.panel._pagination_1400x_1')
         # logger.debug(pages)
-
         self.story.extendList('eroticatags',[ stripHTML(t) for t in page_soup.select('div#tabpanel-tags a.av_as') ])
 
         fullhtml = ""
