@@ -261,7 +261,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
                 # logger.debug(dates)
                 self.story.setMetadata('datePublished', makeDate(dates[0], self.dateformat))
                 self.story.setMetadata('dateUpdated', makeDate(dates[1], self.dateformat))
-                
+
             ## bn_antags[2] contains "The author has completed this series." or "The author is still actively writing this series."
             ## I won't be surprised if this breaks later because of lang localization
             if "completed" in stripHTML(bn_antags[-1]):
