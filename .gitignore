@@ -1,37 +1,84 @@
 #############
 ## Python
 #############
+# Byte-compiled / optimized / DLL files
+__pycache__/
 *.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Virtual environments
+.env
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.pytest_cache/
+
+# Type check / caches
+.mypy_cache/
+.pyre/
+.ruff_cache/
 
 # Translations
 *.mo
 
-# Emacs autosave files
-\#*#
+# Editors and IDEs
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup and temp files
 *~
-
-# Windows batch files
-*.bat
-
-# usually perl -pi.back -e edits.
-*.back
 *.bak
+*.back
+*.swp
+\#*#
 
-# pycharm project specific settings files
-.idea
-
-# vscode project specific settings file
-.vscode
-
-cleanup.sh
-FanFictionDownLoader.zip
+# Archives and outputs
+*.zip
 *.epub
-*Thumbs.db
 FanFicFare.zip
-output
-build
-dist
-FanFicFare.egg-info
+FanFictionDownLoader.zip
+output/
+
+# Project metadata
+FanFicFare.egg-info/
+
+# Personal / secrets
 personal.ini
 appcfg_oauth2_tokens
-venv/
+
+# Misc local configurations
+MyConfigs/
+cleanup.sh
