@@ -1,0 +1,174 @@
+Download 1 FanFiction Book(s) for literotica.com
+calibre_plugins.doc_input.__init__:26: SyntaxWarning: "\P" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\P"? A raw string is also an option.
+calibre_plugins.doc_input.__init__:27: SyntaxWarning: "\P" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\P"? A raw string is also an option.
+FFF: INFO: 2026-04-19 07:07:24,265: calibre_plugins.fanficfare_plugin.jobs(39): FanFicFare v4.56.0
+calibre 9.7  embedded-python: True
+Windows-11-10.0.26200-SP0 Windows ('64bit', 'WindowsPE')
+('Windows', '11', '10.0.26200')
+Python 3.14.2
+Windows: ('11', '10.0.26200', 'SP0', 'Multiprocessor Free')
+Interface language: None
+EXE path: C:\Program Files\Calibre2\calibre-parallel.exe
+Successfully initialized third party plugins: Gather KFX-ZIP (from KFX Input) (2, 30, 0) && DeDRM (10, 0, 9) && Package KFX (from KFX Input) (2, 30, 0) && Action Chains (1, 20, 10) && Ask AI Plugin (1, 4, 4) && Audit Log (1, 0, 19) && Backup Configuration Folder (1, 1, 2) && Calibre Config Reports (4, 2, 2) && Calibre Power Search Plugin (2, 2, 0) && CalibreSpy (1, 0, 92) && Check Books (0, 2, 1) && Count Pages (1, 15, 1) && DOC Input (1, 0, 1) && Diaps Editing Toolbag (0, 5, 0) && Editor Chains (1, 1, 9) && English Noun Frequency (1, 0, 16) && EpubCheck (0, 2, 6) && EpubMerge (3, 2, 0) && EpubSplit (3, 12, 0) && Extract ISBN (1, 6, 6) && Extract People Other Metadata (1, 0, 0) && FanFicFare (4, 56, 0) && Fantastic Fiction (1, 7, 4) && Fantastic Fiction Adults (1, 3, 1) && Favourites Menu (1, 3, 2) && FictionDB (1, 4, 3) && Find Duplicates (1, 10, 10) && Generate Cover (2, 3, 7) && Goodreads (1, 8, 4) && Goodreads More Tags (1, 2, 1, 2) && Goodreads Sync (1, 16, 13) && Import List (1, 9, 9) && Job Spy (1, 0, 239) && KFX metadata reader (from KFX Input) (2, 30, 0) && From KFX (2, 30, 0) && KFX Input (2, 30, 0) && Kindle hi-res covers (0, 5, 1) && Manage Series (1, 5, 3) && Mass Search-Replace (1, 8, 7) && Modify ePub (1, 8, 9) && MultiColumnSearch (1, 0, 96) && Open With (1, 8, 5) && Quality Check (1, 14, 7) && Reading List (1, 15, 7) && Reformat plugin (2, 4, 0) && Resize Cover (1, 2, 2) && Search The Internet (1, 11, 4) && Smashwords Metadata (1, 0, 2) && StoriesOnline Covers (0, 3, 1) && Svengali MCStories Metadata (1, 0, 0) && View Manager (1, 10, 5)
+FFF: INFO: 2026-04-19 07:07:24,458: calibre_plugins.fanficfare_plugin.jobs(62): 
+
+Downloading FanFiction Stories
+Add https://www.literotica.com/series/se/494042403 
+
+FFF: INFO: 2026-04-19 07:07:24,952: calibre_plugins.fanficfare_plugin.jobs(147): 
+
+-------------------------------------------------------------------------------- https://www.literotica.com/series/se/494042403
+FFF: DEBUG: 2026-04-19 07:07:24,952: configurable.py(559): config site:literotica.com
+FFF: DEBUG: 2026-04-19 07:07:24,988: configurable.py(1035): use_browser_cache:
+FFF: DEBUG: 2026-04-19 07:07:24,988: configurable.py(1056): use_basic_cache:true
+FFF: DEBUG: 2026-04-19 07:07:24,988: adapter_literotica.py(154): Chapter/Story URL: <https://www.literotica.com/series/se/494042403> 
+FFF: DEBUG: 2026-04-19 07:07:24,989: cache_basic.py(117): 
+========== MISS (GET) BasicCache
+https://www.literotica.com/series/se/494042403
+FFF: DEBUG: 2026-04-19 07:07:24,989: fetcher_requests.py(114): 
+---------- REQ (GET) RequestsFetcher
+https://www.literotica.com/series/se/494042403
+FFF: DEBUG: 2026-04-19 07:07:25,403: fetcher_requests.py(127): response code:200
+FFF: DEBUG: 2026-04-19 07:07:25,404: decorators.py(118): fromcache:False
+FFF: DEBUG: 2026-04-19 07:07:25,404: decorators.py(129): random sleep(0.50-1.50):1.26
+FFF: DEBUG: 2026-04-19 07:07:26,668: requestable.py(55): Encoding:utf8
+FFF: DEBUG: 2026-04-19 07:07:26,669: adapter_literotica.py(163): set opened url:https://www.literotica.com/series/se/gabys-cuckquean-adventure
+FFF: DEBUG: 2026-04-19 07:07:26,690: adapter_literotica.py(206): Normalized url: https://www.literotica.com/series/se/494042403
+FFF: DEBUG: 2026-04-19 07:07:26,699: adapter_literotica.py(386): Getting Chapters from series JSON
+FFF: INFO: 2026-04-19 07:07:26,700: adapter_literotica.py(389): Fetching chapter data from JSON
+FFF: DEBUG: 2026-04-19 07:07:26,700: adapter_literotica.py(390): 494042403
+FFF: DEBUG: 2026-04-19 07:07:26,700: cache_basic.py(117): 
+========== HIT (GET) BasicCache
+https://literotica.com/api/3/series/494042403/works
+FFF: DEBUG: 2026-04-19 07:07:26,700: requestable.py(55): Encoding:utf8
+FFF: WARNING: 2026-04-19 07:07:26,707: adapter_literotica.py(402): Processing JSON failed. ('int' object has no attribute 'get_text')
+FFF: DEBUG: 2026-04-19 07:07:26,708: calibre_plugins.fanficfare_plugin.jobs(200): metadata newforanthology:
+FFF: INFO: 2026-04-19 07:07:26,915: calibre_plugins.fanficfare_plugin.jobs(248): write to C:\Users\Marty\AppData\Local\Temp\calibre-81rv3z2d\fanficfare_hivgtnrm\Gaby's Cuckquean Adventure-DeadUnt1lDark-n044i25k.epub
+FFF: INFO: 2026-04-19 07:07:26,915: base_writer.py(197): Save directly to file: C:\Users\Marty\AppData\Local\Temp\calibre-81rv3z2d\fanficfare_hivgtnrm\Gaby's Cuckquean Adventure-DeadUnt1lDark-n044i25k.epub
+FFF: DEBUG: 2026-04-19 07:07:26,916: adapter_literotica.py(430): Getting chapter text from: https://www.literotica.com/s/gabys-cuckquean-adventure
+FFF: DEBUG: 2026-04-19 07:07:26,916: cache_basic.py(117): 
+========== MISS (GET) BasicCache
+https://www.literotica.com/s/gabys-cuckquean-adventure
+FFF: DEBUG: 2026-04-19 07:07:26,916: fetcher_requests.py(114): 
+---------- REQ (GET) RequestsFetcher
+https://www.literotica.com/s/gabys-cuckquean-adventure
+FFF: DEBUG: 2026-04-19 07:07:27,162: fetcher_requests.py(127): response code:200
+FFF: DEBUG: 2026-04-19 07:07:27,162: decorators.py(118): fromcache:False
+FFF: DEBUG: 2026-04-19 07:07:27,162: decorators.py(129): random sleep(0.50-1.50):0.51
+FFF: DEBUG: 2026-04-19 07:07:27,669: requestable.py(55): Encoding:utf8
+FFF: DEBUG: 2026-04-19 07:07:27,759: adapter_literotica.py(411): Getting page text
+FFF: DEBUG: 2026-04-19 07:07:27,867: adapter_literotica.py(430): Getting chapter text from: https://www.literotica.com/s/gabys-cuckquean-adventure-pt-08
+FFF: DEBUG: 2026-04-19 07:07:27,867: cache_basic.py(117): 
+========== MISS (GET) BasicCache
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-08
+FFF: DEBUG: 2026-04-19 07:07:27,867: fetcher_requests.py(114): 
+---------- REQ (GET) RequestsFetcher
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-08
+FFF: DEBUG: 2026-04-19 07:07:28,347: fetcher_requests.py(127): response code:200
+FFF: DEBUG: 2026-04-19 07:07:28,347: decorators.py(118): fromcache:False
+FFF: DEBUG: 2026-04-19 07:07:28,347: decorators.py(129): random sleep(0.50-1.50):1.33
+FFF: DEBUG: 2026-04-19 07:07:29,678: requestable.py(55): Encoding:utf8
+FFF: DEBUG: 2026-04-19 07:07:29,753: adapter_literotica.py(411): Getting page text
+FFF: DEBUG: 2026-04-19 07:07:29,829: cache_basic.py(117): 
+========== MISS (GET) BasicCache
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-08?page=2
+FFF: DEBUG: 2026-04-19 07:07:29,829: fetcher_requests.py(114): 
+---------- REQ (GET) RequestsFetcher
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-08?page=2
+FFF: DEBUG: 2026-04-19 07:07:31,655: fetcher_requests.py(127): response code:200
+FFF: DEBUG: 2026-04-19 07:07:31,655: decorators.py(118): fromcache:False
+FFF: DEBUG: 2026-04-19 07:07:31,655: decorators.py(129): random sleep(0.50-1.50):1.15
+FFF: DEBUG: 2026-04-19 07:07:32,806: requestable.py(55): Encoding:utf8
+FFF: DEBUG: 2026-04-19 07:07:32,806: adapter_literotica.py(411): Getting page text
+FFF: DEBUG: 2026-04-19 07:07:32,922: adapter_literotica.py(430): Getting chapter text from: https://www.literotica.com/s/gabys-cuckquean-adventure-pt-02
+FFF: DEBUG: 2026-04-19 07:07:32,922: cache_basic.py(117): 
+========== MISS (GET) BasicCache
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-02
+FFF: DEBUG: 2026-04-19 07:07:32,922: fetcher_requests.py(114): 
+---------- REQ (GET) RequestsFetcher
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-02
+FFF: DEBUG: 2026-04-19 07:07:33,158: fetcher_requests.py(127): response code:200
+FFF: DEBUG: 2026-04-19 07:07:33,158: decorators.py(118): fromcache:False
+FFF: DEBUG: 2026-04-19 07:07:33,158: decorators.py(129): random sleep(0.50-1.50):0.51
+FFF: DEBUG: 2026-04-19 07:07:33,670: requestable.py(55): Encoding:utf8
+FFF: DEBUG: 2026-04-19 07:07:33,761: adapter_literotica.py(411): Getting page text
+FFF: DEBUG: 2026-04-19 07:07:33,868: adapter_literotica.py(430): Getting chapter text from: https://www.literotica.com/s/gabys-cuckquean-adventure-pt-03
+FFF: DEBUG: 2026-04-19 07:07:33,869: cache_basic.py(117): 
+========== MISS (GET) BasicCache
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-03
+FFF: DEBUG: 2026-04-19 07:07:33,869: fetcher_requests.py(114): 
+---------- REQ (GET) RequestsFetcher
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-03
+FFF: DEBUG: 2026-04-19 07:07:34,105: fetcher_requests.py(127): response code:200
+FFF: DEBUG: 2026-04-19 07:07:34,105: decorators.py(118): fromcache:False
+FFF: DEBUG: 2026-04-19 07:07:34,105: decorators.py(129): random sleep(0.50-1.50):1.03
+FFF: DEBUG: 2026-04-19 07:07:35,136: requestable.py(55): Encoding:utf8
+FFF: DEBUG: 2026-04-19 07:07:35,227: adapter_literotica.py(411): Getting page text
+FFF: DEBUG: 2026-04-19 07:07:35,335: adapter_literotica.py(430): Getting chapter text from: https://www.literotica.com/s/gabys-cuckquean-adventure-pt-04
+FFF: DEBUG: 2026-04-19 07:07:35,336: cache_basic.py(117): 
+========== MISS (GET) BasicCache
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-04
+FFF: DEBUG: 2026-04-19 07:07:35,336: fetcher_requests.py(114): 
+---------- REQ (GET) RequestsFetcher
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-04
+FFF: DEBUG: 2026-04-19 07:07:35,578: fetcher_requests.py(127): response code:200
+FFF: DEBUG: 2026-04-19 07:07:35,578: decorators.py(118): fromcache:False
+FFF: DEBUG: 2026-04-19 07:07:35,578: decorators.py(129): random sleep(0.50-1.50):1.20
+FFF: DEBUG: 2026-04-19 07:07:36,773: requestable.py(55): Encoding:utf8
+FFF: DEBUG: 2026-04-19 07:07:36,892: adapter_literotica.py(411): Getting page text
+FFF: DEBUG: 2026-04-19 07:07:37,003: adapter_literotica.py(430): Getting chapter text from: https://www.literotica.com/s/gabys-cuckquean-adventure-pt-05
+FFF: DEBUG: 2026-04-19 07:07:37,003: cache_basic.py(117): 
+========== MISS (GET) BasicCache
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-05
+FFF: DEBUG: 2026-04-19 07:07:37,003: fetcher_requests.py(114): 
+---------- REQ (GET) RequestsFetcher
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-05
+FFF: DEBUG: 2026-04-19 07:07:37,228: fetcher_requests.py(127): response code:200
+FFF: DEBUG: 2026-04-19 07:07:37,228: decorators.py(118): fromcache:False
+FFF: DEBUG: 2026-04-19 07:07:37,229: decorators.py(129): random sleep(0.50-1.50):0.80
+FFF: DEBUG: 2026-04-19 07:07:38,029: requestable.py(55): Encoding:utf8
+FFF: DEBUG: 2026-04-19 07:07:38,104: adapter_literotica.py(411): Getting page text
+FFF: DEBUG: 2026-04-19 07:07:38,178: cache_basic.py(117): 
+========== MISS (GET) BasicCache
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-05?page=2
+FFF: DEBUG: 2026-04-19 07:07:38,178: fetcher_requests.py(114): 
+---------- REQ (GET) RequestsFetcher
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-05?page=2
+FFF: DEBUG: 2026-04-19 07:07:38,414: fetcher_requests.py(127): response code:200
+FFF: DEBUG: 2026-04-19 07:07:38,414: decorators.py(118): fromcache:False
+FFF: DEBUG: 2026-04-19 07:07:38,415: decorators.py(129): random sleep(0.50-1.50):1.35
+FFF: DEBUG: 2026-04-19 07:07:39,769: requestable.py(55): Encoding:utf8
+FFF: DEBUG: 2026-04-19 07:07:39,769: adapter_literotica.py(411): Getting page text
+FFF: DEBUG: 2026-04-19 07:07:39,879: adapter_literotica.py(430): Getting chapter text from: https://www.literotica.com/s/gabys-cuckquean-adventure-pt-06
+FFF: DEBUG: 2026-04-19 07:07:39,879: cache_basic.py(117): 
+========== MISS (GET) BasicCache
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-06
+FFF: DEBUG: 2026-04-19 07:07:39,879: fetcher_requests.py(114): 
+---------- REQ (GET) RequestsFetcher
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-06
+FFF: DEBUG: 2026-04-19 07:07:40,103: fetcher_requests.py(127): response code:200
+FFF: DEBUG: 2026-04-19 07:07:40,103: decorators.py(118): fromcache:False
+FFF: DEBUG: 2026-04-19 07:07:40,103: decorators.py(129): random sleep(0.50-1.50):1.46
+FFF: DEBUG: 2026-04-19 07:07:41,565: requestable.py(55): Encoding:utf8
+FFF: DEBUG: 2026-04-19 07:07:41,641: adapter_literotica.py(411): Getting page text
+FFF: DEBUG: 2026-04-19 07:07:41,715: cache_basic.py(117): 
+========== MISS (GET) BasicCache
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-06?page=2
+FFF: DEBUG: 2026-04-19 07:07:41,715: fetcher_requests.py(114): 
+---------- REQ (GET) RequestsFetcher
+https://www.literotica.com/s/gabys-cuckquean-adventure-pt-06?page=2
+FFF: DEBUG: 2026-04-19 07:07:41,954: fetcher_requests.py(127): response code:200
+FFF: DEBUG: 2026-04-19 07:07:41,954: decorators.py(118): fromcache:False
+FFF: DEBUG: 2026-04-19 07:07:41,954: decorators.py(129): random sleep(0.50-1.50):1.34
+FFF: DEBUG: 2026-04-19 07:07:43,298: requestable.py(55): Encoding:utf8
+FFF: DEBUG: 2026-04-19 07:07:43,298: adapter_literotica.py(411): Getting page text
+FFF: INFO: 2026-04-19 07:07:43,440: writer_epub.py(411): Saving EPUB Version 2.0
+FFF: INFO: 2026-04-19 07:07:44,745: calibre_plugins.fanficfare_plugin.jobs(78): 
+Download Results:
+Add https://www.literotica.com/series/se/494042403 Download epub completed, 7 chapters.
+
+FFF: INFO: 2026-04-19 07:07:44,745: calibre_plugins.fanficfare_plugin.jobs(103): 
+Add
+https://www.literotica.com/series/se/494042403
+
+Integration status: True
