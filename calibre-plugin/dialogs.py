@@ -38,6 +38,7 @@ from calibre.gui2 import gprefs
 show_download_options = 'fff:add new/update dialogs:show_download_options'
 from calibre.gui2.dialogs.confirm_delete import confirm
 from calibre.gui2.complete2 import EditWithComplete
+from fanficfare.exceptions import NotGoingToDownload
 from fanficfare.six import text_type as unicode, ensure_text
 
 # pulls in translation files for _() strings
@@ -154,15 +155,6 @@ class RejectUrlEntry:
             retval = retval + self.note
 
         return retval
-
-class NotGoingToDownload(Exception):
-    def __init__(self,error,icon='dialog_error.png',showerror=True):
-        self.error=error
-        self.icon=icon
-        self.showerror=showerror
-
-    def __str__(self):
-        return self.error
 
 class DroppableQTextEdit(QTextEdit):
     def __init__(self,parent):

@@ -64,7 +64,7 @@ from fanficfare import adapters, exceptions
 
 from fanficfare.epubutils import (
     get_dcsource, get_dcsource_chaptercount, get_story_url_from_epub_html,
-    get_story_url_from_zip_html, reset_orig_chapters_epub, get_cover_data)
+    get_story_url_from_zip_html, reset_orig_chapters_epub, get_cover_img)
 
 from fanficfare.geturls import (
     get_urls_from_page, get_urls_from_text,get_urls_from_imap,
@@ -99,7 +99,7 @@ from calibre_plugins.fanficfare_plugin.dialogs import (
     LoopProgressDialog, UserPassDialog, AboutDialog, CollectURLDialog,
     RejectListDialog, EmailPassDialog, TOTPDialog,
     save_collisions, question_dialog_all,
-    NotGoingToDownload, RejectUrlEntry, IniTextDialog,
+    RejectUrlEntry, IniTextDialog,
     EditTextDialog)
 
 # because calibre immediately transforms html into zip and don't want
@@ -1324,11 +1324,11 @@ class FanFicFarePlugin(InterfaceAction):
         ## network hit.
         identicalbooks = self.do_id_search(url)
         if collision == SKIP and identicalbooks:
-            raise NotGoingToDownload(_("Skipping duplicate story."),"list_remove.png")
+            raise exceptions.NotGoingToDownload(_("Skipping duplicate story."),"list_remove.png")
 
         # Dialogs should prevent this case now.
         if collision in (UPDATE,UPDATEALWAYS) and fileform != 'epub':
-            raise NotGoingToDownload(_("Cannot update non-epub format."))
+            raise exceptions.NotGoingToDownload(_("Cannot update non-epub format."))
 
         if not book['good']:
             # book has already been flagged bad for whatever reason.
@@ -1522,7 +1522,7 @@ class FanFicFarePlugin(InterfaceAction):
                     logger.debug("existing found by identifier URL")
 
                 if collision == SKIP and identicalbooks:
-                    raise NotGoingToDownload(_("Skipping duplicate story."),"list_remove.png")
+                    raise exceptions.NotGoingToDownload(_("Skipping duplicate story."),"list_remove.png")
 
                 if len(identicalbooks) > 1:
                     identicalbooks_msg = _("More than one identical book by Identifier URL or title/author(s)--can't tell which book to update/overwrite.")
@@ -1553,7 +1553,7 @@ class FanFicFarePlugin(InterfaceAction):
                         identicalbooks = []
                         collision = book['collision'] = ADDNEW
                     else:
-                        raise NotGoingToDownload(identicalbooks_msg,"minusminus.png")
+                        raise exceptions.NotGoingToDownload(identicalbooks_msg,"minusminus.png")
 
                 ## changed: add new book when CALIBREONLY if none found.
                 if collision in (CALIBREONLY, CALIBREONLYSAVECOL) and not identicalbooks:
@@ -1640,11 +1640,11 @@ class FanFicFarePlugin(InterfaceAction):
                         # returns int adjusted for start-end range.
                         urlchaptercount = story.getChapterCount()
                         if chaptercount == urlchaptercount and collision == UPDATE:
-                            raise NotGoingToDownload(_("Already contains %d chapters.")%chaptercount,'edit-undo.png',showerror=False)
+                            raise exceptions.NotGoingToDownload(_("Already contains %d chapters.")%chaptercount,'edit-undo.png',showerror=False)
                         elif chaptercount > urlchaptercount and not (collision == UPDATEALWAYS and adapter.getConfig('force_update_epub_always')):
-                            raise NotGoingToDownload(_("Existing epub contains %d chapters, web site only has %d. Use Overwrite or force_update_epub_always to force update.") % (chaptercount,urlchaptercount),'dialog_error.png')
+                            raise exceptions.NotGoingToDownload(_("Existing epub contains %d chapters, web site only has %d. Use Overwrite or force_update_epub_always to force update.") % (chaptercount,urlchaptercount),'dialog_error.png')
                         elif chaptercount == 0:
-                            raise NotGoingToDownload(_("FanFicFare doesn't recognize chapters in existing epub, epub is probably from a different source. Use Overwrite to force update."),'dialog_error.png')
+                            raise exceptions.NotGoingToDownload(_("FanFicFare doesn't recognize chapters in existing epub, epub is probably from a different source. Use Overwrite to force update."),'dialog_error.png')
 
                 if collision == OVERWRITE and \
                         db.has_format(book_id,formmapping[fileform],index_is_id=True):
@@ -1661,7 +1661,7 @@ class FanFicFarePlugin(InterfaceAction):
                         # updated does have time, use full timestamps.
                         if (lastupdated.time() == time.min and fileupdated.date() > lastupdated.date()) or \
                                 (lastupdated.time() != time.min and fileupdated > lastupdated):
-                            raise NotGoingToDownload(_("Not Overwriting, web site is not newer."),'edit-undo.png',showerror=False)
+                            raise exceptions.NotGoingToDownload(_("Not Overwriting, web site is not newer."),'edit-undo.png',showerror=False)
 
                 # For update, provide a tmp file copy of the existing epub so
                 # it can't change underneath us.  Now also overwrite for logpage preserve.
@@ -2213,30 +2213,45 @@ class FanFicFarePlugin(InterfaceAction):
             ## start with None.  If no subbook covers, don't force one
             ## here.  User can configure FFF to always create/polish a
             ## cover if they want.  This is about when we force it.
-            coverpath = None
+            coverimgpath = None
             coverimgtype = None
+            had_cover = False
 
-            ## first, look for covers inside the subbooks.  Stop at the
-            ## first one, which will be used if there isn't a pre-existing
+            # epubmerge wants a path to cover img on disk
+            def write_image(imgtype,imgdata):
+                tmp = PersistentTemporaryFile(prefix='cover_',
+                                                   suffix='.'+imagetypes[imgtype],
+                                                   dir=options['tdir'])
+                tmp.write(imgdata)
+                tmp.flush()
+                tmp.close()
+                return tmp.name
+
+            ## if prior epub had a cover, we should use it again.
+            if mergebook['calibre_id'] and db.has_format(mergebook['calibre_id'],'EPUB',index_is_id=True):
+                (covertype,coverdata) = get_cover_img(db.format(mergebook['calibre_id'],'EPUB',index_is_id=True,as_file=True))
+                if coverdata:
+                    had_cover = True
+                    coverimgpath = write_image(covertype,coverdata)
+                    coverimgtype = covertype
+                    logger.debug("prior anthology cover found")
+
+            ## look for covers inside the subbooks.  Stop at the first
+            ## one, which will be used if there isn't a pre-existing
             ## calibre cover.
-            if not coverpath:
+            if not coverimgpath:
                 for book in good_list:
-                    coverdata = get_cover_data(book['outfile'])
+                    (covertype,coverdata) = get_cover_img(book['outfile'])
                     if coverdata: # found a cover.
-                        (coverimgtype,coverimgdata) = coverdata[4:6]
-                        # logger.debug('coverimgtype:%s [%s]'%(coverimgtype,imagetypes[coverimgtype]))
-                        tmpcover = PersistentTemporaryFile(suffix='.'+imagetypes[coverimgtype],
-                                                           dir=options['tdir'])
-                        tmpcover.write(coverimgdata)
-                        tmpcover.flush()
-                        tmpcover.close()
-                        coverpath = tmpcover.name
+                        coverimgpath = write_image(covertype,coverdata)
+                        coverimgtype = covertype
+                        logger.debug('from subbook coverimgpath:%s'%coverimgpath)
                         break
-            # logger.debug('coverpath:%s'%coverpath)
 
             ## if updating an existing book and there is at least one
             ## subbook cover:
-            if coverpath and mergebook['calibre_id']:
+            if not had_cover and coverimgpath and mergebook['calibre_id']:
+                logger.debug("anth cover: using cal cover")
                 # Couldn't find a better way to get the cover path.
                 calcoverpath = os.path.join(db.library_path,
                                          db.path(mergebook['calibre_id'], index_is_id=True),
@@ -2244,9 +2259,11 @@ class FanFicFarePlugin(InterfaceAction):
                 ## if there's an existing cover, use it.  Calibre will set
                 ## it for us during lots of different actions anyway.
                 if os.path.exists(calcoverpath):
-                    coverpath = calcoverpath
+                    coverimgpath = calcoverpath
 
-            # logger.debug('coverpath:%s'%coverpath)
+            ## Note that this cover will be replaced if 'inject
+            ## generated' cover is on
+            logger.debug('coverimgpath:%s'%coverimgpath)
             mrg_args = [tmp.name,
                     [ x['outfile'] for x in good_list ],]
             mrg_kwargs = {
@@ -2254,7 +2271,7 @@ class FanFicFarePlugin(InterfaceAction):
                 'titleopt':mergebook['title'],
                 'keepmetadatafiles':True,
                 'source':mergebook['url'],
-                'coverjpgpath':coverpath
+                'coverjpgpath':coverimgpath
                 }
             logger.debug('anthology_merge_keepsingletocs:%s'%
                          mergebook['anthology_merge_keepsingletocs'])
@@ -2632,7 +2649,6 @@ class FanFicFarePlugin(InterfaceAction):
                 db.new_api.set_link_for_authors(author_id_to_link_map)
 
         # set series link if found.
-        logger.debug("has link_map:%s"%(hasattr(db.new_api,'set_link_map')))
         ## new_api.set_link_map added in Calibre v6.15
         if hasattr(db.new_api,'set_link_map') and \
                 prefs['set_series_url'] and \
@@ -2641,6 +2657,7 @@ class FanFicFarePlugin(InterfaceAction):
             series = book['series']
             if '[' in series: # a few can have a series w/o number
                 series = series[:series.rindex(' [')]
+            logger.debug("Setting series link:%s"%book['all_metadata']['seriesUrl'])
             db.new_api.set_link_map('series',{series:
                                                   book['all_metadata']['seriesUrl']})
 
@@ -2830,6 +2847,9 @@ class FanFicFarePlugin(InterfaceAction):
         mi.pubdate = book['pubdate']
         mi.timestamp = book['timestamp']
         mi.comments = book['comments']
+        if prefs['seriescase']:
+            from calibre.ebooks.metadata.sources.base import fixcase
+            book['series'] = fixcase(book['series'])
         mi.series = book['series']
         return mi
 
@@ -3181,6 +3201,7 @@ The previously downloaded book is still in the anthology, but FFF doesn't have t
 
             if prefs['setanthologyseries'] and book['title'] == series:
                 book['series'] = series+' [0]'
+                book['all_metadata']['seriesUrl'] = options.get('anthology_url','')
 
             # logger.debug("anthology_title_pattern:%s"%configuration.getConfig('anthology_title_pattern'))
             if configuration.getConfig('anthology_title_pattern'):

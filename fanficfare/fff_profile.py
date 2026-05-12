@@ -13,9 +13,10 @@
 # limitations under the License.
 #
 
-## not compatibly with py2 SortKey not available.
+## not compatibly with py2, SortKey not available.
 import sys
-if sys.version_info >= (2, 9):
+DO_PROFILING = False
+if DO_PROFILING and sys.version_info >= (3, 7):
     from io import StringIO
     import cProfile, pstats
     from pstats import SortKey

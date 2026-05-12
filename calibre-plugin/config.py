@@ -371,6 +371,7 @@ class ConfigWidget(QWidget):
             prefs['suppresstitlesort'] = self.std_columns_tab.suppresstitlesort.isChecked()
             prefs['authorcase'] = self.std_columns_tab.authorcase.isChecked()
             prefs['titlecase'] = self.std_columns_tab.titlecase.isChecked()
+            prefs['seriescase'] = self.std_columns_tab.seriescase.isChecked()
             prefs['setanthologyseries'] = self.std_columns_tab.setanthologyseries.isChecked()
 
             prefs['set_author_url'] =self.std_columns_tab.set_author_url.isChecked()
@@ -1637,6 +1638,11 @@ class StandardColumnsTab(QWidget):
                 self.setanthologyseries.setChecked(prefs['setanthologyseries'])
                 row.append(self.setanthologyseries)
 
+                self.seriescase = QCheckBox(_('Fix Series Case?'),self)
+                self.seriescase.setToolTip(_("If checked, Calibre's routine for correcting the capitalization of title will be applied.")
+                                          +"\n"+_("This effects Calibre metadata only, not FanFicFare metadata in title page."))
+                self.seriescase.setChecked(prefs['seriescase'])
+                row.append(self.seriescase)
         grid = QGridLayout()
         for rownum, row in enumerate(rows):
             for colnum, col in enumerate(row):
