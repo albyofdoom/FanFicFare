@@ -234,15 +234,31 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         # logger.debug(authorurl)
         self.story.setMetadata('author', stripHTML(authora))
         self.story.setMetadata('authorUrl', authorurl)
+        
+        # Determine authorId based on URL format
+        author_id = None
         if '?' in authorurl:
-            self.story.setMetadata('authorId', urlparse.parse_qs(authorurl.split('?')[1])['uid'][0])
+            # Old format: memberpage.php?uid=XXXXX
+            author_id = urlparse.parse_qs(authorurl.split('?')[1])['uid'][0]
         elif '/authors/' in authorurl:
-            ## 2026: author URL is now /authors/<name>/works/stories rather
-            ## than just /authors/<name>, so take the segment immediately
-            ## after /authors/ instead of the last path segment.
-            self.story.setMetadata('authorId', authorurl.split('/authors/')[1].split('/')[0])
-        else: # if all else fails
-            self.story.setMetadata('authorId', stripHTML(authora))
+            # New format: /authors/username/works[/stories]
+            # Try to extract numeric userid from JSON data
+            userid_match = re.search(r'"userid":"(\d+)"', data)
+            if not userid_match:
+                userid_match = re.search(r'userid:(\d+)', data)
+            if userid_match:
+                author_id = userid_match.group(1)
+            else:
+                # Fallback to username from URL path
+                author_match = re.search(r'/authors/([^/]+)', authorurl)
+                if author_match:
+                    author_id = author_match.group(1)
+        
+        # Final fallback: use author display name
+        if not author_id:
+            author_id = stripHTML(authora)
+        
+        self.story.setMetadata('authorId', author_id)
 
         if soup.select('div#tabpanel-tags'):
             # logger.debug("tags1")
