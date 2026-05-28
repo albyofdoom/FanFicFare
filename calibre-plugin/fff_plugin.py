@@ -486,8 +486,11 @@ class FanFicFarePlugin(InterfaceAction):
             prefs.save_to_db()
 
     def add_reject_urls(self):
+        url_list = self.get_urls_clip()
+        url_list_text = "\n".join(url_list)
+        logger.debug("\n\n%s\n"%url_list_text)
         d = EditTextDialog(self.gui,
-                           "http://example.com/story.php?sid=5,"+_("Reason why I rejected it")+"\nhttp://example.com/story.php?sid=6,"+_("Title by Author")+" - "+_("Reason why I rejected it"),
+                           "http://example.com/story.php?sid=5,"+_("Reason why I rejected it")+"\nhttp://example.com/story.php?sid=6,"+_("Title by Author")+" - "+_("Reason why I rejected it")+"\n"+url_list_text,
                            # icon=self.windowIcon(),
                            title=_("FanFicFare"),
                            label=_("Add Reject URLs. Use: <b>http://...,note</b> or <b>http://...,title by author - note</b><br>Invalid story URLs will be ignored."),
@@ -1334,7 +1337,7 @@ class FanFicFarePlugin(InterfaceAction):
             # book has already been flagged bad for whatever reason.
             return
 
-        adapter = get_fff_adapter(url,fileform)
+        adapter = get_fff_adapter(url,fileform,ini_snippet=options.get('ini_snippet',None))
         ## chapter range for title_chapter_range_pattern
         adapter.setChaptersRange(book['begin'],book['end'])
 
@@ -2153,7 +2156,7 @@ class FanFicFarePlugin(InterfaceAction):
                                  msgl)
 
     def do_status_message(self,message,timeout=0):
-        self.gui.status_bar.show_message(message,timeout)
+        self.gui.status_bar.show_message(message,timeout,show_notification=False)
         try:
             QApplication.processEvents(QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents)
         except:
@@ -2535,9 +2538,9 @@ class FanFicFarePlugin(InterfaceAction):
         if prefs['allow_custcol_from_ini']:
             if book['all_metadata'].get('anthology',False):
                 # Anthologies don't need per-story config
-                configuration = get_fff_config(book['url'],options['fileform'])
+                configuration = get_fff_config(book['url'],options['fileform'],ini_snippet=options.get('ini_snippet',None))
             else:
-                configuration = get_fff_adapter(book['url'],options['fileform']).get_configuration()
+                configuration = get_fff_adapter(book['url'],options['fileform'],ini_snippet=options.get('ini_snippet',None)).get_configuration()
             # meta => custcol[,a|n|r|n_anthaver,r_anthaver]
             # cliches=>\#acolumn,r
             for line in configuration.getConfig('custom_columns_settings').splitlines():
@@ -2708,7 +2711,7 @@ class FanFicFarePlugin(InterfaceAction):
                 setting_name = None
                 if prefs['allow_gc_from_ini']:
                     if not configuration: # might already have it from allow_custcol_from_ini
-                        configuration = get_fff_config(book['url'],options['fileform'])
+                        configuration = get_fff_config(book['url'],options['fileform'],ini_snippet=options.get('ini_snippet',None))
 
                     for (template,regexp,setting) in configuration.get_generate_cover_settings():
                         value = Template(template).safe_substitute(book['all_metadata'])
@@ -3164,7 +3167,7 @@ The previously downloaded book is still in the anthology, but FFF doesn't have t
         book['comments'] += '</div>'
         # logger.debug(book['comments'])
 
-        configuration = get_fff_config(options.get('anthology_url',''),options['fileform'])
+        configuration = get_fff_config(options.get('anthology_url',''),options['fileform'],ini_snippet=options.get('ini_snippet',None))
         if existingbook:
             book['title'] = deftitle = existingbook['title']
             if prefs['anth_comments_newonly']:
