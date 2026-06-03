@@ -224,12 +224,17 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         ## the req and look at the redirect.
         ## Should change to /authors/ if/when it starts appearing.
         ## Assuming it's in the same place.
-        authora = soup.find("a", class_="y_eU")
+        ## Try new site structure first (_author__title_*), fallback to old (y_eU)
+        authora = soup.select_one('a._author__title_2s0v6_48')
+        if not authora:
+            authora = soup.find("a", class_="y_eU")
         if not authora:
             authora = soup.select_one('a[class^="_author__title"]')
         authorurl = authora['href']
         if authorurl.startswith('//'):
             authorurl = self.parsedUrl.scheme+':'+authorurl
+        if not authorurl.startswith('http'):
+            authorurl = 'https://www.literotica.com' + authorurl
         # logger.debug(authora)
         # logger.debug(authorurl)
         self.story.setMetadata('author', stripHTML(authora))
