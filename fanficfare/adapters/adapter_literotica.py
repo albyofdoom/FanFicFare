@@ -318,6 +318,15 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             if rateall:
                 self.story.setMetadata('averrating', '%4.2f' % float(rateall.group(1)))
 
+            ## Extract view_count and favorite_count for one-shots
+            viewcount = re.search(r'view_count:(\d+)',data)
+            if viewcount:
+                self.story.setMetadata('views', unicode(viewcount.group(1)))
+            
+            favoritecount = re.search(r'favorite(?:s)?_count:(\d+)',data)
+            if favoritecount:
+                self.story.setMetadata('favorites', unicode(favoritecount.group(1)))
+
             ## one-shots assumed completed.
             self.story.setMetadata('status','Completed')
 
@@ -407,6 +416,16 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
                     all_rates = []
                     if 'series' in json_state:
                         all_rates = [ float(x['rate_all']) for x in json_state['series']['works'] ]
+
+                        ## Extract views and favorites from series data
+                        series_data = json_state.get('series', {}).get('data', {})
+                        if 'view_count' in series_data:
+                            self.story.setMetadata('views', unicode(series_data['view_count']))
+                        if 'favorites_count' in series_data:
+                            self.story.setMetadata('favorites', unicode(series_data['favorites_count']))
+                        # Also check for 'favorite_count' variant
+                        if 'favorite_count' in series_data:
+                            self.story.setMetadata('favorites', unicode(series_data['favorite_count']))
 
                         ## Extract dates from chapter approval dates if dates_from_chapters is enabled
                         if self.getConfig("dates_from_chapters"):

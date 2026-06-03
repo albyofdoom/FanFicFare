@@ -35,3 +35,5 @@ FanFicFare.egg-info
 personal.ini
 appcfg_oauth2_tokens
 venv/
+.venv
+samples/
