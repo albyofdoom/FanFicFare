@@ -198,13 +198,14 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         if not isSingleStory:
             # Normilize the url?
             state = re.findall(r"prefix\=\"/series/\",state='(.+?)'</script>", data)
-            json_state = json.loads(state[0].replace("\\'","'").replace("\\\\","\\"))
-            url_series_id = unicode(re.match(self.getSiteURLPattern(),self.url).group('storyseriesid'))
-            json_series_id = unicode(json_state['series']['data']['id'])
-            if json_series_id != url_series_id:
-                res = re.sub(url_series_id, json_series_id, unicode(self.url))
-                logger.debug("Normalized url: %s"%res)
-                self._setURL(res)
+            if state:
+                json_state = json.loads(state[0].replace("\\'","'").replace("\\\\","\\"))
+                url_series_id = unicode(re.match(self.getSiteURLPattern(),self.url).group('storyseriesid'))
+                json_series_id = unicode(json_state['series']['data']['id'])
+                if json_series_id != url_series_id:
+                    res = re.sub(url_series_id, json_series_id, unicode(self.url))
+                    logger.debug("Normalized url: %s"%res)
+                    self._setURL(res)
 
         ## common between one-shots and multi-chapters
         # title
@@ -219,12 +220,17 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         ## the req and look at the redirect.
         ## Should change to /authors/ if/when it starts appearing.
         ## Assuming it's in the same place.
-        authora = soup.find("a", class_="y_eU")
+        ## Try new site structure first (_author__title_*), fallback to old (y_eU)
+        authora = soup.select_one('a._author__title_2s0v6_48')
+        if not authora:
+            authora = soup.find("a", class_="y_eU")
         if not authora:
             authora = soup.select_one('a[class^="_author__title"]')
         authorurl = authora['href']
         if authorurl.startswith('//'):
             authorurl = self.parsedUrl.scheme+':'+authorurl
+        if not authorurl.startswith('http'):
+            authorurl = 'https://www.literotica.com' + authorurl
         # logger.debug(authora)
         # logger.debug(authorurl)
         self.story.setMetadata('author', stripHTML(authora))
@@ -329,7 +335,10 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
 
         else:
             ## Multi-chapter stories.  AKA multi-part 'Story Series'.
-            bn_antags = soup.select('div#tabpanel-info p.bn_an')
+            ## Try new site structure first (_files__date_*), fallback to old (p.bn_an)
+            bn_antags = soup.select('div._date_container_1absz_1414 div._files__date_1absz_672')
+            if not bn_antags:
+                bn_antags = soup.select('div#tabpanel-info p.bn_an')
             # logger.debug(bn_antags)
             if bn_antags and not self.getConfig("dates_from_chapters"):
                 ## Use dates from series metadata unless dates_from_chapters is enabled
@@ -344,21 +353,37 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
                 self.story.setMetadata('datePublished', makeDate(dates[0], self.dateformat))
                 self.story.setMetadata('dateUpdated', makeDate(dates[1], self.dateformat))
 
-            ## bn_antags[2] contains "The author has completed this series." or "The author is still actively writing this series."
+            ## Look for completion status - old and new structures
+            status_tag = soup.select_one('div._files__date_1absz_672')
+            if not status_tag:
+                status_tag = bn_antags[-1] if bn_antags else None
+            
+            ## Contains "The author has completed this series." or "The author is still actively writing this series."
             ## I won't be surprised if this breaks later because of lang localization
-            if "completed" in stripHTML(bn_antags[-1]):
+            if status_tag and "completed" in stripHTML(status_tag):
                 self.story.setMetadata('status','Completed')
             else:
                 self.story.setMetadata('status','In-Progress')
 
             ## category from chapter list
-            self.story.extendList('category',[ stripHTML(t) for t in soup.select('a.br_rl') ])
+            ## Old site used a.br_rl class, new site uses p._description_* a
+            category_links = soup.select('p._description_17jn2_73 a')
+            if not category_links:
+                category_links = soup.select('a.br_rl')
+            self.story.extendList('category',[ stripHTML(t) for t in category_links ])
 
-            for chapteratag in soup.select('a.br_rj'):
+            ## Try new site structure first (_link_17jn2_55), fallback to old (br_rj)
+            chapter_links = soup.select('section._wrapper_17jn2_1 a._link_17jn2_55')
+            if not chapter_links:
+                chapter_links = soup.select('a.br_rj')
+            
+            for chapteratag in chapter_links:
                 chapter_title = stripHTML(chapteratag)
                 # logger.debug('\tChapter: "%s"' % chapteratag)
                 # /series/se does include full URLs current.
                 chapurl = chapteratag['href']
+                if not chapurl.startswith('http'):
+                    chapurl = 'https://www.literotica.com' + chapurl
                 # logger.debug("Chapter URL: " + chapurl)
                 self.add_chapter(chapter_title, chapurl)
 
