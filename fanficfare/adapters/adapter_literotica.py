@@ -330,6 +330,10 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             favoritecount = re.search(r'favorite(?:s)?_count:(\d+)',data)
             if favoritecount:
                 self.story.setMetadata('favorites', unicode(favoritecount.group(1)))
+            
+            ratecount = re.search(r'rate_count:(\d+)',data)
+            if ratecount:
+                self.story.setMetadata('votes', unicode(ratecount.group(1)))
 
             ## one-shots assumed completed.
             self.story.setMetadata('status','Completed')
@@ -423,19 +427,35 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
                     # logger.debug(state)
                     json_state = json.loads(state)
                     # logger.debug(json.dumps(json_state, sort_keys=True,indent=2, separators=(',', ':')))
-                    all_rates = []
                     if 'series' in json_state:
-                        all_rates = [ float(x['rate_all']) for x in json_state['series']['works'] ]
-
-                        ## Extract views and favorites from series data
-                        series_data = json_state.get('series', {}).get('data', {})
-                        if 'view_count' in series_data:
-                            self.story.setMetadata('views', unicode(series_data['view_count']))
-                        if 'favorites_count' in series_data:
-                            self.story.setMetadata('favorites', unicode(series_data['favorites_count']))
-                        # Also check for 'favorite_count' variant
-                        if 'favorite_count' in series_data:
-                            self.story.setMetadata('favorites', unicode(series_data['favorite_count']))
+                        ## Extract views, favorites, votes, and calculate weighted average rating
+                        total_views = 0
+                        total_favorites = 0
+                        total_votes = 0
+                        total_weighted_rating = 0.0
+                        
+                        for work in json_state['series']['works']:
+                            if 'view_count' in work:
+                                total_views += work['view_count']
+                            if 'favorite_count' in work:
+                                total_favorites += work['favorite_count']
+                            elif 'favorites_count' in work:
+                                total_favorites += work['favorites_count']
+                            if 'rate_count' in work:
+                                vote_count = work['rate_count']
+                                total_votes += vote_count
+                                # Calculate weighted rating (rating * votes)
+                                if 'rate_all' in work and vote_count > 0:
+                                    total_weighted_rating += float(work['rate_all']) * vote_count
+                        
+                        if total_views > 0:
+                            self.story.setMetadata('views', unicode(total_views))
+                        if total_favorites > 0:
+                            self.story.setMetadata('favorites', unicode(total_favorites))
+                        if total_votes > 0:
+                            self.story.setMetadata('votes', unicode(total_votes))
+                            # Calculate weighted average rating
+                            self.story.setMetadata('averrating', '%4.2f' % (total_weighted_rating / total_votes))
 
                         ## Extract dates from chapter approval dates if dates_from_chapters is enabled
                         if self.getConfig("dates_from_chapters"):
@@ -451,8 +471,6 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
                                 date_approvals.sort()
                                 self.story.setMetadata('datePublished', date_approvals[0])
                                 self.story.setMetadata('dateUpdated', date_approvals[-1])
-                    if all_rates:
-                        self.story.setMetadata('averrating', '%4.2f' % (sum(all_rates) / float(len(all_rates))))
 
                     ## alternate chapters from JSON
                     if self.num_chapters() < 1:
