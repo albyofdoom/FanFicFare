@@ -224,30 +224,25 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         ## the req and look at the redirect.
         ## Should change to /authors/ if/when it starts appearing.
         ## Assuming it's in the same place.
-        ## Try new site structure first (_author__title_*), fallback to old (y_eU)
-        authora = soup.select_one('a._author__title_2s0v6_48')
-        if not authora:
-            authora = soup.find("a", class_="y_eU")
+        authora = soup.find("a", class_="y_eU")
         if not authora:
             authora = soup.select_one('a[class^="_author__title"]')
         authorurl = authora['href']
         if authorurl.startswith('//'):
             authorurl = self.parsedUrl.scheme+':'+authorurl
-        if not authorurl.startswith('http'):
-            authorurl = 'https://www.literotica.com' + authorurl
         # logger.debug(authora)
         # logger.debug(authorurl)
         self.story.setMetadata('author', stripHTML(authora))
         self.story.setMetadata('authorUrl', authorurl)
         
-        # Determine authorId based on URL format
+        # Determine authorId - prefer numerical IDs
         author_id = None
         if '?' in authorurl:
             # Old format: memberpage.php?uid=XXXXX
             author_id = urlparse.parse_qs(authorurl.split('?')[1])['uid'][0]
         elif '/authors/' in authorurl:
             # New format: /authors/username/works[/stories]
-            # Try to extract numeric userid from JSON data
+            # Try to extract numeric userid from JSON data first
             userid_match = re.search(r'"userid":"(\d+)"', data)
             if not userid_match:
                 userid_match = re.search(r'userid:(\d+)', data)
@@ -255,12 +250,8 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
                 author_id = userid_match.group(1)
             else:
                 # Fallback to username from URL path
-                author_match = re.search(r'/authors/([^/]+)', authorurl)
-                if author_match:
-                    author_id = author_match.group(1)
-        
-        # Final fallback: use author display name
-        if not author_id:
+                author_id = authorurl.split('/authors/')[1].split('/')[0]
+        else: # if all else fails
             author_id = stripHTML(authora)
         
         self.story.setMetadata('authorId', author_id)
@@ -322,7 +313,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             if rateall:
                 self.story.setMetadata('averrating', '%4.2f' % float(rateall.group(1)))
 
-            ## Extract view_count and favorite_count for one-shots
+            ## Extract view_count, favorite_count, and rate_count for one-shots
             viewcount = re.search(r'view_count:(\d+)',data)
             if viewcount:
                 self.story.setMetadata('views', unicode(viewcount.group(1)))
@@ -445,35 +436,9 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
                     # logger.debug(state)
                     json_state = json.loads(state)
                     # logger.debug(json.dumps(json_state, sort_keys=True,indent=2, separators=(',', ':')))
+                    all_rates = []
                     if 'series' in json_state:
-                        ## Extract views, favorites, votes, and calculate weighted average rating
-                        total_views = 0
-                        total_favorites = 0
-                        total_votes = 0
-                        total_weighted_rating = 0.0
-                        
-                        for work in json_state['series']['works']:
-                            if 'view_count' in work:
-                                total_views += work['view_count']
-                            if 'favorite_count' in work:
-                                total_favorites += work['favorite_count']
-                            elif 'favorites_count' in work:
-                                total_favorites += work['favorites_count']
-                            if 'rate_count' in work:
-                                vote_count = work['rate_count']
-                                total_votes += vote_count
-                                # Calculate weighted rating (rating * votes)
-                                if 'rate_all' in work and vote_count > 0:
-                                    total_weighted_rating += float(work['rate_all']) * vote_count
-                        
-                        if total_views > 0:
-                            self.story.setMetadata('views', unicode(total_views))
-                        if total_favorites > 0:
-                            self.story.setMetadata('favorites', unicode(total_favorites))
-                        if total_votes > 0:
-                            self.story.setMetadata('votes', unicode(total_votes))
-                            # Calculate weighted average rating
-                            self.story.setMetadata('averrating', '%4.2f' % (total_weighted_rating / total_votes))
+                        all_rates = [ float(x['rate_all']) for x in json_state['series']['works'] ]
 
                         ## Extract dates from chapter approval dates if dates_from_chapters is enabled
                         if self.getConfig("dates_from_chapters"):
@@ -489,6 +454,8 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
                                 date_approvals.sort()
                                 self.story.setMetadata('datePublished', date_approvals[0])
                                 self.story.setMetadata('dateUpdated', date_approvals[-1])
+                    if all_rates:
+                        self.story.setMetadata('averrating', '%4.2f' % (sum(all_rates) / float(len(all_rates))))
 
                     ## alternate chapters from JSON
                     if self.num_chapters() < 1:
