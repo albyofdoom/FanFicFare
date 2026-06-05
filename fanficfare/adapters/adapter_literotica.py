@@ -278,17 +278,32 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             # make sure there's something in the tag.
             # logger.debug("desc %s"%descdiv)
             desc.append(unicode(descdiv))
+        
+        # Check if description is just a generic "Series ... has X chapters" message
+        if desc:
+            desc_text = stripHTML(u''.join(desc))
+            # Match both straight quotes and curly quotes, and both "chapter" and "chapters"
+            if re.match(r'Series ["\u201C].+?["\u201D] has \d+ chapters?\.?', desc_text):
+                desc = []  # Clear generic description and fall back to chapter descriptions
+        
         if not desc or self.getConfig("include_chapter_descriptions_in_summary"):
             ## Only for backward compatibility with 'stories' that
             ## don't have an intro or short desc.
             descriptions = []
-            for i, chapterdesctag in enumerate(soup.select('p.br_rk')):
+            ## Look for both old format (p.br_rk) and new format chapter descriptions
+            ## (within list items, not the series-level description)
+            chapter_desc_tags = soup.select('p.br_rk') or soup.select('ul[class^="_list_"] li[class^="_item_"] p[class^="_description_"]')
+            for i, chapterdesctag in enumerate(chapter_desc_tags):
                 # remove category link, but only temporarily
-                a = chapterdesctag.a.extract()
+                a = chapterdesctag.find('a')
+                if a:
+                    a = a.extract()
                 descriptions.append("%d. %s" % (i + 1, stripHTML(chapterdesctag)))
                 # now put it back--it's used below
-                chapterdesctag.append(a)
-            desc.append(unicode("<p>"+"</p>\n<p>".join(descriptions)+"</p>"))
+                if a:
+                    chapterdesctag.append(a)
+            if descriptions:
+                desc.append(unicode("<p>"+"</p>\n<p>".join(descriptions)+"</p>"))
 
         self.setDescription(self.url,u''.join(desc))
 
@@ -407,20 +422,37 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             ## Extract views, favorites, votes for series from hydration data
             ## Similar to dates/ratings above - sum all per-chapter values when
             ## counts match the number of chapters found.
+            ## If only one value or more values than chapters are found, use the first
+            ## (which is typically the series-level aggregate in the hydration data).
             viewcounts = re.findall(r'view_count:(\d+)', data)
-            if viewcounts and len(viewcounts) == self.num_chapters():
-                total_views = sum(int(v) for v in viewcounts)
-                self.story.setMetadata('views', unicode(total_views))
+            if viewcounts:
+                if len(viewcounts) == self.num_chapters():
+                    # Multiple per-chapter values - sum them
+                    total_views = sum(int(v) for v in viewcounts)
+                    self.story.setMetadata('views', unicode(total_views))
+                elif len(viewcounts) >= 1:
+                    # Single value or mixed (series + chapters) - use first (series-level aggregate)
+                    self.story.setMetadata('views', unicode(viewcounts[0]))
 
             favoritecounts = re.findall(r'favorite(?:s)?_count:(\d+)', data)
-            if favoritecounts and len(favoritecounts) == self.num_chapters():
-                total_favorites = sum(int(f) for f in favoritecounts)
-                self.story.setMetadata('favorites', unicode(total_favorites))
+            if favoritecounts:
+                if len(favoritecounts) == self.num_chapters():
+                    # Multiple per-chapter values - sum them
+                    total_favorites = sum(int(f) for f in favoritecounts)
+                    self.story.setMetadata('favorites', unicode(total_favorites))
+                elif len(favoritecounts) >= 1:
+                    # Single value or mixed (series + chapters) - use first (series-level aggregate)
+                    self.story.setMetadata('favorites', unicode(favoritecounts[0]))
 
             ratecounts = re.findall(r'rate_count:(\d+)', data)
-            if ratecounts and len(ratecounts) == self.num_chapters():
-                total_votes = sum(int(r) for r in ratecounts)
-                self.story.setMetadata('votes', unicode(total_votes))
+            if ratecounts:
+                if len(ratecounts) == self.num_chapters():
+                    # Multiple per-chapter values - sum them
+                    total_votes = sum(int(r) for r in ratecounts)
+                    self.story.setMetadata('votes', unicode(total_votes))
+                elif len(ratecounts) >= 1:
+                    # Single value or mixed (series + chapters) - use first (series-level aggregate)
+                    self.story.setMetadata('votes', unicode(ratecounts[0]))
 
         #### Attempting averrating from JS metadata.
         #### also alternate chapters from json
