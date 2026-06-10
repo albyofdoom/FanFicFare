@@ -278,50 +278,17 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             self.story.extendList('eroticatags', [ stripHTML(t).title() for t in soup.select('div[class^="_widget__tags_"] a[class^="_tag_item_"]') ])
         # logger.debug(self.story.getList('eroticatags'))
 
-        ## look first for 'Series Introduction', then Info panel short desc
-        ## series can have either, so put in common code.
+        ## Initialize description list
         desc = []
-        introtag = soup.select_one('div[class^="_introduction-wrap"] > p')
-        descdiv = soup.select_one('div#tabpanel-info div.bn_B') or \
-                  soup.select_one('div[class^="_tab__pane_"] div[class^="_widget__info_"]')
-        if introtag and stripHTML(introtag):
-            # make sure there's something in the tag.
-            # logger.debug("intro %s"%introtag)
-            desc.append(unicode(introtag))
-        elif descdiv and stripHTML(descdiv):
-            # make sure there's something in the tag.
-            # logger.debug("desc %s"%descdiv)
-            desc.append(unicode(descdiv))
-        
-        # Check if description is just a generic "Series ... has X chapters" message
-        if desc:
-            desc_text = stripHTML(u''.join(desc))
-            # Match both straight quotes and curly quotes, and both "chapter" and "chapters"
-            if re.match(r'Series ["\u201C].+?["\u201D] has \d+ chapters?\.?', desc_text):
-                desc = []  # Clear generic description and fall back to chapter descriptions
-        
-        if not desc or self.getConfig("include_chapter_descriptions_in_summary"):
-            ## Only for backward compatibility with 'stories' that
-            ## don't have an intro or short desc.
-            descriptions = []
-            ## Look for both old format (p.br_rk) and new format chapter descriptions
-            ## (within list items, not the series-level description)
-            chapter_desc_tags = soup.select('p.br_rk') or soup.select('ul[class^="_list_"] li[class^="_item_"] p[class^="_description_"]')
-            for i, chapterdesctag in enumerate(chapter_desc_tags):
-                # remove category link, but only temporarily
-                a = chapterdesctag.find('a')
-                if a:
-                    a = a.extract()
-                descriptions.append("%d. %s" % (i + 1, stripHTML(chapterdesctag)))
-                # now put it back--it's used below
-                if a:
-                    chapterdesctag.append(a)
-            if descriptions:
-                desc.append(unicode("<p>"+"</p>\n<p>".join(descriptions)+"</p>"))
-
-        self.setDescription(self.url,u''.join(desc))
 
         if isSingleStory:
+            ## For single-chapter stories, use meta description tag
+            meta_desc = soup.find("meta", {"name": "description"})
+            if meta_desc and meta_desc.get('content'):
+                desc.append(unicode("<p>%s</p>" % meta_desc['content']))
+
+            self.setDescription(self.url, u''.join(desc))
+
             ## one-shots don't *display* date info, but they have it
             ## hidden in <script>
             ## shows _date_approve "date_approve":"01/31/2024"
@@ -372,6 +339,48 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
 
         else:
             ## Multi-chapter stories.  AKA multi-part 'Story Series'.
+            
+            ## look first for 'Series Introduction', then Info panel short desc
+            introtag = soup.select_one('div[class^="_introduction-wrap"] > p')
+            descdiv = soup.select_one('div#tabpanel-info div.bn_B') or \
+                      soup.select_one('div[class^="_tab__pane_"] div[class^="_widget__info_"]')
+            if introtag and stripHTML(introtag):
+                # make sure there's something in the tag.
+                # logger.debug("intro %s"%introtag)
+                desc.append(unicode(introtag))
+            elif descdiv and stripHTML(descdiv):
+                # make sure there's something in the tag.
+                # logger.debug("desc %s"%descdiv)
+                desc.append(unicode(descdiv))
+            
+            # Check if description is just a generic "Series ... has X chapters" message
+            if desc:
+                desc_text = stripHTML(u''.join(desc))
+                # Match both straight quotes and curly quotes, and both "chapter" and "chapters"
+                if re.match(r'Series ["\u201C].+?["\u201D] has \d+ chapters?\.?', desc_text):
+                    desc = []  # Clear generic description and fall back to chapter descriptions
+            
+            if not desc or self.getConfig("include_chapter_descriptions_in_summary"):
+                ## Only for backward compatibility with 'stories' that
+                ## don't have an intro or short desc.
+                descriptions = []
+                ## Look for both old format (p.br_rk) and new format chapter descriptions
+                ## (within list items, not the series-level description)
+                chapter_desc_tags = soup.select('p.br_rk') or soup.select('ul[class^="_list_"] li[class^="_item_"] p[class^="_description_"]')
+                for i, chapterdesctag in enumerate(chapter_desc_tags):
+                    # remove category link, but only temporarily
+                    a = chapterdesctag.find('a')
+                    if a:
+                        a = a.extract()
+                    descriptions.append("%d. %s" % (i + 1, stripHTML(chapterdesctag)))
+                    # now put it back--it's used below
+                    if a:
+                        chapterdesctag.append(a)
+                if descriptions:
+                    desc.append(unicode("<p>"+"</p>\n<p>".join(descriptions)+"</p>"))
+
+            self.setDescription(self.url, u''.join(desc))
+
             bn_antags = soup.select('div[class^="_date_container_"] > div[class^="_files__date_"]')
             # logger.debug(bn_antags)
             if bn_antags and not self.getConfig("dates_from_chapters"):
