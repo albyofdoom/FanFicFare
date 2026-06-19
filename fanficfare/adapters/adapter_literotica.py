@@ -292,7 +292,9 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
                 chapterdesctag.append(a)
             desc.append(unicode("<p>"+"</p>\n<p>".join(descriptions)+"</p>"))
 
-        self.setDescription(self.url,u''.join(desc))
+        # Defer setting the description until after we determine
+        # whether this is a single story or a multi-chapter series
+        # to avoid setting it twice (which caused duplicated text).
 
         if isSingleStory:
             ## For single-chapter stories, use meta description tag
