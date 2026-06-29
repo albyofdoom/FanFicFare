@@ -272,25 +272,8 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         introtag = soup.select_one('div[class^="_content_"] > div[class^="_introduction-wrap"] > p')
         descdiv = soup.select_one('div#tabpanel-info div.bn_B') or \
                   soup.select_one('div[class^="_tab__pane_"] div[class^="_widget__info_"]')
-        if introtag and stripHTML(introtag):
-            # make sure there's something in the tag.
-            # logger.debug("intro %s"%introtag)
-            desc.append(unicode(introtag))
-        elif descdiv and stripHTML(descdiv):
-            # make sure there's something in the tag.
-            # logger.debug("desc %s"%descdiv)
-            desc.append(unicode(descdiv))
-        if not desc or self.getConfig("include_chapter_descriptions_in_summary"):
-            ## Only for backward compatibility with 'stories' that
-            ## don't have an intro or short desc.
-            descriptions = []
-            for i, chapterdesctag in enumerate(soup.select('section ul[class^="_list_"] p[class^="_description_"]')):
-                # remove category link, but only temporarily
-                a = chapterdesctag.a.extract()
-                descriptions.append("%d. %s" % (i + 1, stripHTML(chapterdesctag)))
-                # now put it back--it's used below
-                chapterdesctag.append(a)
-            desc.append(unicode("<p>"+"</p>\n<p>".join(descriptions)+"</p>"))
+        # Do not append intro/short desc here; defer until single vs multi
+        # chapter handling below to avoid adding the same text twice.
 
         # Defer setting the description until after we determine
         # whether this is a single story or a multi-chapter series
@@ -301,6 +284,20 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             meta_desc = soup.find("meta", {"name": "description"})
             if meta_desc and meta_desc.get('content'):
                 desc.append(unicode("<p>%s</p>" % meta_desc['content']))
+
+            # If no intro/short desc present (desc is empty) or
+            # include_chapter_descriptions_in_summary is enabled, build
+            # a fallback list of chapter descriptions and append once.
+            if not desc or self.getConfig("include_chapter_descriptions_in_summary"):
+                descriptions = []
+                for i, chapterdesctag in enumerate(soup.select('section ul[class^="_list_"] p[class^="_description_"]')):
+                    # remove category link, but only temporarily
+                    a = chapterdesctag.a.extract()
+                    descriptions.append("%d. %s" % (i + 1, stripHTML(chapterdesctag)))
+                    # now put it back--it's used below
+                    chapterdesctag.append(a)
+                if descriptions:
+                    desc.append(unicode("<p>"+"</p>\n<p>".join(descriptions)+"</p>"))
 
             self.setDescription(self.url, u''.join(desc))
 
