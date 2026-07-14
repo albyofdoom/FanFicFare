@@ -798,6 +798,13 @@ try to download.</p>
             ## Embedded CSS <style> tag url() images
             for embedded in soup.select('style'):
                 embedded.string = self.include_css_urls(url,embedded.string)
+        elif self.getConfig('keep_img_tags'):
+            logger.debug("keep_img_tags")
+            ## keep <img>s normalize src attrs.
+            acceptable_attributes.extend(('src','alt'))
+            for img in soup.find_all('img'):
+                if img.has_attr('src'):
+                    img['src'] = urljoin(url,img['src'])
         else:
             ## remove all img tags entirely
             for img in soup.find_all('img'):
@@ -848,7 +855,6 @@ try to download.</p>
                     ## make link absolute if not one of the above.
                     if not hrefurl:
                         hrefurl = urljoin(url,href)
-                        logger.debug("urljoin: (%s)+(%s)->(%s)"%(url,href,hrefurl))
                     alink['href'] = hrefurl
                     # logger.debug("\n===========\nparsedUrl.path:%s\ntoppath:%s\nhrefurl:%s\n\n"%(parsedUrl.path,toppath,hrefurl))
 

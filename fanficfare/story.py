@@ -55,6 +55,7 @@ imagetypes = {
     'gif':'image/gif',
     'svg':'image/svg+xml',
     'webp':'image/webp',
+    'avif':'image/avif',
     }
 
 try:
@@ -1691,7 +1692,6 @@ class Story(Requestable):
                 imgurl = url
             else:
                 imgurl = urljoin(parenturl,url)
-                logger.debug("urljoin: (%s)+(%s)->(%s)"%(parenturl,url,imgurl))
 
         ## apply coverexclusion to specific covers, too.  Primarily for ffnet imageu.
         ## (Note that default and force covers don't pass cover_exclusion_regexp)
