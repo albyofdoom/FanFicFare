@@ -59,7 +59,7 @@ class BaseBrowserCache(object):
         self.getConfigList = getConfigList_fn
 
         self.cache_dir = self.expand_cache_dir(getConfig_fn(CACHE_DIR_CONFIG))
-        age_limit=self.getConfig(AGE_LIMIT_CONFIG)
+        age_limit=self.getConfig(AGE_LIMIT_CONFIG,4.0)
         if age_limit is None or age_limit == '' or float(age_limit) < 0.0:
             self.age_limit = None
         else:

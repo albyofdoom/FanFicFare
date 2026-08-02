@@ -2,6 +2,7 @@
 # Copyright (C) YEAR ORGANIZATION
 # 
 # Translators:
+# Andrei Stepanov, 2026
 # ashed <craysy@gmail.com>, 2017,2020-2021,2026
 # 3f8f9c00d81c4c6472ea90c31062787f_3a6a5f8 <579c3b116bb0c0395bb3df6f1ae34246_210356>, 2014
 # Vikarti Anatra <vikarti.anatra@viorsan.com>, 2020
@@ -12,7 +13,7 @@ msgstr ""
 "Project-Id-Version: calibre-plugins\n"
 "POT-Creation-Date: 2026-06-30 17:46-0500\n"
 "PO-Revision-Date: 2014-06-19 22:55+0000\n"
-"Last-Translator: ashed <craysy@gmail.com>, 2017,2020-2021,2026\n"
+"Last-Translator: Andrei Stepanov, 2026\n"
 "Language-Team: Russian (http://app.transifex.com/calibre/calibre-plugins/language/ru/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -119,7 +120,7 @@ msgstr "Список поддерживаемых сайтов"
 
 #: config.py:229
 msgid "FAQs"
-msgstr "FAQ"
+msgstr "ЧАВО"
 
 #: config.py:244
 msgid "Basic"
@@ -262,7 +263,7 @@ msgstr "Отметьте и покажите существующие книги
 
 #: config.py:548
 msgid "Check for changed Story URL?"
-msgstr "Проверить измененный URL истории"
+msgstr "Проверить изменённый URL истории"
 
 #: config.py:549
 msgid ""
@@ -420,7 +421,7 @@ msgstr "Разные варианты"
 
 #: config.py:667
 msgid "Inject calibre Series when none found?"
-msgstr "Внедрить серии calibre, когда ничего не найдено?"
+msgstr "Внедрить серии Calibre, когда ничего не найдено?"
 
 #: config.py:668
 msgid ""
@@ -550,13 +551,13 @@ msgstr "Просмотр вашего personal.ini с удаленными им�
 
 #: config.py:828
 msgid "INI Snippets"
-msgstr ""
+msgstr "Фрагменты INI"
 
 #: config.py:833
 msgid ""
 "Manage saved INI snippets that can be applied to individual download "
 "sessions."
-msgstr ""
+msgstr "Управляйте сохранёнными INI-фрагментами для применения к отдельным сеансам загрузки."
 
 #: config.py:847 fff_plugin.py:1465 jobs.py:98
 msgid "Add"
@@ -612,28 +613,28 @@ msgstr "Изменения будут сохранены только в том 
 
 #: config.py:921 dialogs.py:901
 msgid "Saved Snippets"
-msgstr ""
+msgstr "Сохранённые фрагменты"
 
 #: config.py:930
 msgid "Remove INI Snippet <i>%s</i> ?"
-msgstr ""
+msgstr "Удалить фрагмент INI <i>%s</i> ?"
 
 #: config.py:942 config.py:943 config.py:957 config.py:958 dialogs.py:928
 #: dialogs.py:929
 msgid "Edit INI Snippet"
-msgstr ""
+msgstr "Править фрагмент INI"
 
 #: config.py:967 dialogs.py:946
 msgid "Save INI Snippet Name"
-msgstr ""
+msgstr "Сохранить имя фрагмента INI"
 
 #: config.py:968 dialogs.py:947
 msgid "Enter a name for this INI snippet:"
-msgstr ""
+msgstr "Введите имя для этого фрагмента INI:"
 
 #: config.py:969 dialogs.py:948
 msgid "New INI Snippet"
-msgstr ""
+msgstr "Новый фрагмент INI"
 
 #: config.py:980
 msgid "Plugin Defaults"
@@ -645,7 +646,7 @@ msgstr "Умолчания плагина (%s) (только чтение)"
 
 #: config.py:992
 msgid "View 'Safe' personal.ini"
-msgstr "Показать \"Безопасный\" personal.ini"
+msgstr "Показать «Безопасный» personal.ini"
 
 #: config.py:1026
 msgid "Calibre Column Entry Names"
@@ -673,7 +674,7 @@ msgstr "Автоматически добавлять новые/обновле�
 
 #: config.py:1058
 msgid "\"Send to Device\" Reading Lists"
-msgstr "Списки чтения \"Отправить на устройство\""
+msgstr "Списки чтения «Отправить на устройство»"
 
 #: config.py:1059 config.py:1062 config.py:1076 config.py:1079
 msgid ""
@@ -693,7 +694,7 @@ msgstr "Автоматически добавлять новые/обновле�
 
 #: config.py:1075
 msgid "\"To Read\" Reading Lists"
-msgstr "Списки чтения \"Для чтения\""
+msgstr "Списки чтения «Для чтения»"
 
 #: config.py:1086
 msgid "Add stories back to \"Send to Device\" Reading List(s) when marked \"Read\"."
@@ -909,7 +910,7 @@ msgstr "Сброс отключенных и подтверждающих диа
 
 #: config.py:1423
 msgid "Reset all show me again dialogs for the FanFicFare plugin"
-msgstr "Сбросить все диалоги \"снова показать мне\" для плагина FanFicFare"
+msgstr "Сбросить все диалоги «снова показать мне» для плагина FanFicFare"
 
 #: config.py:1427
 msgid "&View library preferences..."
@@ -1001,11 +1002,11 @@ msgstr "Издатель"
 
 #: config.py:1506
 msgid "Story ID"
-msgstr "ID истории"
+msgstr "ИД истории"
 
 #: config.py:1507
 msgid "Author ID"
-msgstr "ID автора"
+msgstr "ИД автора"
 
 #: config.py:1508
 msgid "Extra Tags"
@@ -1166,7 +1167,7 @@ msgstr "Комментарии"
 
 #: config.py:1679
 msgid "Ids(url id only)"
-msgstr "ID (только ID URL)"
+msgstr "ИД (только ИД URL)"
 
 #: config.py:1684
 msgid ""
@@ -1444,7 +1445,7 @@ msgstr "Обновить метаданные для существующих и
 
 #: dialogs.py:340 dialogs.py:1079
 msgid "Apply an INI snippet for this download."
-msgstr ""
+msgstr "Применить фрагмент INI для этой загрузки."
 
 #: dialogs.py:410
 msgid "(%s URLs found)"
@@ -1623,19 +1624,19 @@ msgstr "О FanFicFare"
 
 #: dialogs.py:896
 msgid "No INI Snippet"
-msgstr ""
+msgstr "Нет фрагмента INI"
 
 #: dialogs.py:897
 msgid "Edit One-Time Snippet"
-msgstr ""
+msgstr "Правка одноразового фрагмента"
 
 #: dialogs.py:939 dialogs.py:942
 msgid "Save INI Snippet?"
-msgstr ""
+msgstr "Сохранить фрагмент INI?"
 
 #: dialogs.py:943
 msgid "Would you like to save this INI snippet to use again?"
-msgstr ""
+msgstr "Хотели бы вы сохранить этот фрагмент INI для повторного использования?"
 
 #: dialogs.py:997
 msgid "Remove selected books from the list"
@@ -1768,27 +1769,27 @@ msgstr "Показать это подтверждение ещё раз"
 
 #: dialogs.py:1905
 msgid "Name Empty"
-msgstr ""
+msgstr "Имя пустое"
 
 #: dialogs.py:1906
 msgid "Name cannot be empty"
-msgstr ""
+msgstr "Имя не может быть пустым"
 
 #: dialogs.py:1911
 msgid "Name Already Used"
-msgstr ""
+msgstr "Имя уже используется"
 
 #: dialogs.py:1912
 msgid "The same name already exists"
-msgstr ""
+msgstr "Такое же имя уже существует"
 
 #: dialogs.py:1917
 msgid "Name Too Long"
-msgstr ""
+msgstr "Слишком длинное имя"
 
 #: dialogs.py:1918
 msgid "A snippet name cannot be more than %s characters."
-msgstr ""
+msgstr "Имя фрагмента не может содержать более %s символов."
 
 #: fff_plugin.py:135 fff_plugin.py:167 fff_plugin.py:474 fff_plugin.py:495
 msgid "FanFicFare"
@@ -2479,7 +2480,7 @@ msgstr "Нет хороших историй/обновлений в скача�
 #: fff_plugin.py:2115
 msgid ""
 "Are you sure you want to continue with creating/updating this Anthology?"
-msgstr "Вы уверены, что хотите продолжить создание/обновление этой Антологии?"
+msgstr "Уверены, что хотите продолжить создание/обновление этой Антологии?"
 
 #: fff_plugin.py:2116
 msgid "Any updates that failed will <b>not</b> be included in the Anthology."
@@ -2495,7 +2496,7 @@ msgstr "Продолжить обновление этой антологии и
 
 #: fff_plugin.py:2137
 msgid "Downloading from %s"
-msgstr "Загрузка с %s"
+msgstr "Скачивание с %s"
 
 #: fff_plugin.py:2140
 msgid "Proceed with updating your library?"
@@ -2503,7 +2504,7 @@ msgstr "Продолжить обновление вашей библиотек�
 
 #: fff_plugin.py:2177
 msgid "FanFicFare download complete"
-msgstr "Загрузка FanFicFare завершена"
+msgstr "Скачивание FanFicFare завершено"
 
 #: fff_plugin.py:2177
 msgid "FanFicFare log"

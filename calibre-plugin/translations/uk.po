@@ -620,19 +620,19 @@ msgstr "Вилучити фрагмент INI <i>%s</i> ?"
 #: config.py:942 config.py:943 config.py:957 config.py:958 dialogs.py:928
 #: dialogs.py:929
 msgid "Edit INI Snippet"
-msgstr ""
+msgstr "Редагувати фрагмент INI"
 
 #: config.py:967 dialogs.py:946
 msgid "Save INI Snippet Name"
-msgstr ""
+msgstr "Зберегти назву фрагмента INI"
 
 #: config.py:968 dialogs.py:947
 msgid "Enter a name for this INI snippet:"
-msgstr ""
+msgstr "Введіть назву цього фрагмента INI:"
 
 #: config.py:969 dialogs.py:948
 msgid "New INI Snippet"
-msgstr ""
+msgstr "Новий фрагмент INI"
 
 #: config.py:980
 msgid "Plugin Defaults"
@@ -1443,7 +1443,7 @@ msgstr "Оновити метадані для наявних творів у Ca
 
 #: dialogs.py:340 dialogs.py:1079
 msgid "Apply an INI snippet for this download."
-msgstr ""
+msgstr "Застосувати фрагмент INI до цих отриманих даних."
 
 #: dialogs.py:410
 msgid "(%s URLs found)"
@@ -1622,19 +1622,19 @@ msgstr "Про FanFicFare"
 
 #: dialogs.py:896
 msgid "No INI Snippet"
-msgstr ""
+msgstr "Немає фрагмента INI"
 
 #: dialogs.py:897
 msgid "Edit One-Time Snippet"
-msgstr ""
+msgstr "Редагувати одноразовий фрагмент"
 
 #: dialogs.py:939 dialogs.py:942
 msgid "Save INI Snippet?"
-msgstr ""
+msgstr "Зберегти фрагмент INI?"
 
 #: dialogs.py:943
 msgid "Would you like to save this INI snippet to use again?"
-msgstr ""
+msgstr "Хочете зберегти цей фрагмент INI для повторного використання?"
 
 #: dialogs.py:997
 msgid "Remove selected books from the list"
@@ -1767,27 +1767,27 @@ msgstr "Показувати це підтвердження знову"
 
 #: dialogs.py:1905
 msgid "Name Empty"
-msgstr ""
+msgstr "Порожня назва"
 
 #: dialogs.py:1906
 msgid "Name cannot be empty"
-msgstr ""
+msgstr "Назва має бути непорожньою"
 
 #: dialogs.py:1911
 msgid "Name Already Used"
-msgstr ""
+msgstr "Назву вже використано"
 
 #: dialogs.py:1912
 msgid "The same name already exists"
-msgstr ""
+msgstr "Вже існує запис із такою назвою"
 
 #: dialogs.py:1917
 msgid "Name Too Long"
-msgstr ""
+msgstr "Надто довга назва"
 
 #: dialogs.py:1918
 msgid "A snippet name cannot be more than %s characters."
-msgstr ""
+msgstr "Довжина назви фрагмента не повинна перевищувати %s символів."
 
 #: fff_plugin.py:135 fff_plugin.py:167 fff_plugin.py:474 fff_plugin.py:495
 msgid "FanFicFare"

@@ -859,7 +859,7 @@ class BaseXenForo2ForumAdapter(BaseSiteAdapter):
                 ## which makes for extremely difficult to find replace_metadata issues.
                 tstr = re.sub(r'\s+',' ',tstr)
                 if self.getConfig('capitalize_forumtags'):
-                    tstr = title(tstr)
+                    tstr = title_case(tstr)
                 if tagname:
                     # logger.debug("Forum Tag(%s) list(%s)"%(stripHTML(tag),tagname))
                     self.story.addToList(tagname,tstr)
@@ -925,16 +925,22 @@ class BaseXenForo2ForumAdapter(BaseSiteAdapter):
             # in case it changes:
             posts_per_page = int(self.getConfig("reader_posts_per_page",10))
 
-            ## look forward a hardcoded 3 pages max in reader mode.
-            for offset in range(0,3):
+            ## Look forward AND backward two pages max in reader mode.
+            ## Probably only need one each direction, but I didn't
+            ## expect to need any.
+            ##
+            ## Because SB(at least) will sometimes put 9 or 11 posts
+            ## on a reader page and no reader-mode (individual /posts/
+            ## URLs) are being blocked lately.  See #1395
+            for offset in (0,1,-1,2,-2):
                 souptag = self.get_cache_post(url)
-
                 if not souptag and url in self.threadmarks_for_reader:
                     (tmcat_num,tmcat_index)=self.threadmarks_for_reader[url]
                     reader_page_num = int((tmcat_index+posts_per_page)/posts_per_page) + offset
-                    # logger.debug('Reader page offset:%s tmcat_num:%s tmcat_index:%s'%(offset,tmcat_num,tmcat_index))
                     reader_url=self.make_reader_url(tmcat_num,reader_page_num)
-                    # logger.debug("Fetch reader URL to: %s"%reader_url)
+                    # logger.debug("Fetch reader page: %s"%reader_url)
+                    if offset != 0:
+                        logger.debug("Post was not found on expected reader page, trying offset(%s)"%offset)
                     topsoup = self.make_soup(self.get_request(reader_url))
                     # make_soup() loads cache with posts from that reader
                     # page.  looking for it in cache reuses code in
@@ -1099,8 +1105,8 @@ class BaseXenForo2ForumAdapter(BaseSiteAdapter):
 
 # from https://daviseford.com/blog/2017/04/27/python-string-to-title-including-punctuation.html
 # fixes englisher contractions being title cased incorrectly.
-def title(title):
-    return re.sub(r"(?<=[a-z])[\']([A-Z])", lambda x: x.group().lower(), title.title())
+def title_case(title):
+    return re.sub(r"(?:(?<=[a-z])[\']|\d)([A-Z])", lambda x: x.group().lower(), title.title())
 
 # decode obscured email addresses.  Since we're downloading fiction,
 # they're going to be fictitious and fictitious characters don't

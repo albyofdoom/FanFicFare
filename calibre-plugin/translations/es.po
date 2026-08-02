@@ -555,13 +555,13 @@ msgstr "Ver el archivo personal.ini con nombres de usuario y contraseñas elimin
 
 #: config.py:828
 msgid "INI Snippets"
-msgstr ""
+msgstr "Fragmentos INI"
 
 #: config.py:833
 msgid ""
 "Manage saved INI snippets that can be applied to individual download "
 "sessions."
-msgstr ""
+msgstr "Gestionar fragmentos INI guardados que pueden aplicarse a sesiones de descarga individuales."
 
 #: config.py:847 fff_plugin.py:1465 jobs.py:98
 msgid "Add"
@@ -569,7 +569,7 @@ msgstr "Añadir"
 
 #: config.py:857
 msgid "Remove"
-msgstr "Remover"
+msgstr "Eliminar"
 
 #: config.py:864
 msgid "defaults.ini"
@@ -617,28 +617,28 @@ msgstr "Los cambios sólo se guardarán si pulsa «Aceptar» para abandonar la p
 
 #: config.py:921 dialogs.py:901
 msgid "Saved Snippets"
-msgstr ""
+msgstr "Fragmentos guardados"
 
 #: config.py:930
 msgid "Remove INI Snippet <i>%s</i> ?"
-msgstr ""
+msgstr "¿Eliminar fragmento INI <i>%s</i>?"
 
 #: config.py:942 config.py:943 config.py:957 config.py:958 dialogs.py:928
 #: dialogs.py:929
 msgid "Edit INI Snippet"
-msgstr ""
+msgstr "Modificar fragmento INI"
 
 #: config.py:967 dialogs.py:946
 msgid "Save INI Snippet Name"
-msgstr ""
+msgstr "Guardar nombre de fragmento INI"
 
 #: config.py:968 dialogs.py:947
 msgid "Enter a name for this INI snippet:"
-msgstr ""
+msgstr "Introduzca un nombre para este fragmento INI:"
 
 #: config.py:969 dialogs.py:948
 msgid "New INI Snippet"
-msgstr ""
+msgstr "Nuevo fragmento INI"
 
 #: config.py:980
 msgid "Plugin Defaults"
@@ -1449,7 +1449,7 @@ msgstr "¿Actualizar los metadatos de las historias existentes en calibre a part
 
 #: dialogs.py:340 dialogs.py:1079
 msgid "Apply an INI snippet for this download."
-msgstr ""
+msgstr "Aplicar un fragmento INI para esta descarga."
 
 #: dialogs.py:410
 msgid "(%s URLs found)"
@@ -1628,19 +1628,19 @@ msgstr "Acerca de FanFicFare"
 
 #: dialogs.py:896
 msgid "No INI Snippet"
-msgstr ""
+msgstr "Ningún fragmento INI"
 
 #: dialogs.py:897
 msgid "Edit One-Time Snippet"
-msgstr ""
+msgstr "Modificar fragmento sólo para esta vez"
 
 #: dialogs.py:939 dialogs.py:942
 msgid "Save INI Snippet?"
-msgstr ""
+msgstr "¿Guardar fragmento INI?"
 
 #: dialogs.py:943
 msgid "Would you like to save this INI snippet to use again?"
-msgstr ""
+msgstr "¿Desea guardar este fragmento INI para volver a usarlo?"
 
 #: dialogs.py:997
 msgid "Remove selected books from the list"
@@ -1773,27 +1773,27 @@ msgstr "Mostrar esta confirmación de nuevo"
 
 #: dialogs.py:1905
 msgid "Name Empty"
-msgstr ""
+msgstr "Nombre vacío"
 
 #: dialogs.py:1906
 msgid "Name cannot be empty"
-msgstr ""
+msgstr "El nombre no puede estar vacío"
 
 #: dialogs.py:1911
 msgid "Name Already Used"
-msgstr ""
+msgstr "Nombre en uso"
 
 #: dialogs.py:1912
 msgid "The same name already exists"
-msgstr ""
+msgstr "Ya existe un fragmento con el mismo nombre"
 
 #: dialogs.py:1917
 msgid "Name Too Long"
-msgstr ""
+msgstr "Nombre demasiado larg"
 
 #: dialogs.py:1918
 msgid "A snippet name cannot be more than %s characters."
-msgstr ""
+msgstr "El nombre de fragmento no puede tener más de %s caracteres."
 
 #: fff_plugin.py:135 fff_plugin.py:167 fff_plugin.py:474 fff_plugin.py:495
 msgid "FanFicFare"
