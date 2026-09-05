@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 
-from __future__ import absolute_import
 import logging
 logger = logging.getLogger(__name__)
 import re
@@ -25,9 +24,8 @@ from bs4.element import Comment
 from ..htmlcleanup import stripHTML
 from .. import exceptions as exceptions
 
-# py2 vs py3 transition
-from ..six import text_type as unicode
-from ..six.moves.urllib import parse as urlparse
+
+from urllib import parse as urlparse
 
 from .base_adapter import BaseSiteAdapter, makeDate
 
@@ -350,7 +348,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             self.add_chapter(self.story.getMetadata('title'), self.url)
 
         else:
-            js_series_id = unicode(re.search(r'{id:(\d+?),', story_jsdict).group(1))
+            js_series_id = str(re.search(r'{id:(\d+?),', story_jsdict).group(1))
             seriesWorks_jsdict_point = re.search(r'_\$HY\.r\[\"(?:seriesWorks)\[\\\".+?\"]=\$R\[\d+]=\((.+?)=', data).group(1)
             story_jsdict += re.search(r']\(' + re.escape(seriesWorks_jsdict_point) + r'(.+?)}]\);', data).group(1)
             ## Multi-chapter stories.  AKA multi-part 'Story Series'.
@@ -420,7 +418,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             self.story.extendList('category',[ stripHTML(t) for t in soup.select('section p[class^="_description_"] > a') ])
 
             if self.getConfig("tags_from_chapters"):
-                self.story.extendList('eroticatags', [unicode(t).title() for t in re.findall(r'tag:\"(.+?)\",', story_jsdict)])
+                self.story.extendList('eroticatags', [str(t).title() for t in re.findall(r'tag:\"(.+?)\",', story_jsdict)])
 
             for chapteratag in soup.select('section li[class^="_item_"] > a'):
                 chapter_title = stripHTML(chapteratag)
@@ -498,7 +496,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
 
                     ## Collect tags from series/story page if tags_from_chapters is enabled
                     if self.getConfig("tags_from_chapters"):
-                        self.story.extendList('eroticatags', [ unicode(t['tag']).title() for t in chap['tags'] ])
+                        self.story.extendList('eroticatags', [ str(t['tag']).title() for t in chap['tags'] ])
         except Exception as e:
             logger.warning("Processing JSON failed. (%s)"%e)
 
@@ -517,7 +515,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         fullhtml = ""
         for aa_ht_div in page_soup.find_all('div', 'aa_ht') + page_soup.select('div[class^="_article__content_"]'):
             if aa_ht_div.div:
-                html = unicode(aa_ht_div.div)
+                html = str(aa_ht_div.div)
                 # Strip some starting and ending tags,
                 html = re.sub(r'^<div.*?>', r'', html)
                 html = re.sub(r'</div>$', r'', html)
@@ -562,7 +560,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         page_soup = self.make_soup(fullhtml)
         fullhtml = self.utf8FromSoup(url, self.make_soup(fullhtml))
         fullhtml = chapter_description + fullhtml
-        fullhtml = unicode(fullhtml)
+        fullhtml = str(fullhtml)
 
         return fullhtml
 

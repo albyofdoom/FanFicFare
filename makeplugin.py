@@ -39,7 +39,7 @@ if __name__=="__main__":
         'cloudscraper',
         'requests',
         'requests_toolbelt',
-        'requests_file.py',
+        'requests_file',
         'urllib3',
         'certifi',
         'idna',

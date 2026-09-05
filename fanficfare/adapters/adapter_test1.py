@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 
-from __future__ import absolute_import
 import re
 import datetime
 import time
@@ -24,8 +23,8 @@ logger = logging.getLogger(__name__)
 
 from .. import exceptions
 
-# py2 vs py3 transition
-from ..six import ensure_text
+
+from ..ensure import ensure_text
 
 from .base_adapter import BaseSiteAdapter,  makeDate
 
@@ -512,7 +511,6 @@ def getClass():
     return TestSiteAdapter
 
 '''
-from __future__ import absolute_import
 import logging
 logger = logging.getLogger(__name__)
 
