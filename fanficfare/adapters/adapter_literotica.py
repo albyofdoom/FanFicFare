@@ -24,6 +24,12 @@ from bs4.element import Comment
 from ..htmlcleanup import stripHTML
 from .. import exceptions as exceptions
 
+# Provide Python 3 compatibility for code that calls `unicode()`
+try:
+    unicode
+except NameError:
+    unicode = str
+
 
 from urllib import parse as urlparse
 
