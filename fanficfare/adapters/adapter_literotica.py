@@ -355,6 +355,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
 
         else:
             js_series_id = str(re.search(r'{id:(\d+?),', story_jsdict).group(1))
+            js_series_id = str(re.search(r'{id:(\d+?),', story_jsdict).group(1))
             seriesWorks_jsdict_point = re.search(r'_\$HY\.r\[\"(?:seriesWorks)\[\\\".+?\"]=\$R\[\d+]=\((.+?)=', data).group(1)
             story_jsdict += re.search(r']\(' + re.escape(seriesWorks_jsdict_point) + r'(.+?)}]\);', data).group(1)
             ## Multi-chapter stories.  AKA multi-part 'Story Series'.
@@ -424,6 +425,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             self.story.extendList('category',[ stripHTML(t) for t in soup.select('section p[class^="_description_"] > a') ])
 
             if self.getConfig("tags_from_chapters"):
+                self.story.extendList('eroticatags', [str(t).title() for t in re.findall(r'tag:\"(.+?)\",', story_jsdict)])
                 self.story.extendList('eroticatags', [str(t).title() for t in re.findall(r'tag:\"(.+?)\",', story_jsdict)])
 
             for chapteratag in soup.select('section li[class^="_item_"] > a'):
@@ -503,6 +505,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
                     ## Collect tags from series/story page if tags_from_chapters is enabled
                     if self.getConfig("tags_from_chapters"):
                         self.story.extendList('eroticatags', [ str(t['tag']).title() for t in chap['tags'] ])
+                        self.story.extendList('eroticatags', [ str(t['tag']).title() for t in chap['tags'] ])
         except Exception as e:
             logger.warning("Processing JSON failed. (%s)"%e)
 
@@ -522,6 +525,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         for aa_ht_div in page_soup.find_all('div', 'aa_ht') + page_soup.select('div[class^="_article__content_"]'):
             if aa_ht_div.div:
                 html = str(aa_ht_div.div)
+                html = str(aa_ht_div.div)
                 # Strip some starting and ending tags,
                 html = re.sub(r'^<div.*?>', r'', html)
                 html = re.sub(r'</div>$', r'', html)
@@ -536,7 +540,11 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
 
         raw_page = self.get_request(url)
         page_soup = self.make_soup(raw_page)
-        pages = page_soup.select_one('nav[class^="panel clearfix _pagination_"]')
+        ## 2026 site change: the pagination nav class dropped 'clearfix'
+        ## (was 'panel clearfix _pagination_...', now 'panel
+        ## _pagination_...'), so match on the _pagination_ token, which
+        ## covers both the old and new class strings.
+        pages = page_soup.select_one('nav[class*="_pagination_"]')
         # logger.debug(pages)
 
         fullhtml = ""
@@ -553,8 +561,17 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             last_page_links = pages.find_all('a', class_='l_bJ')
             if not last_page_links:
                 last_page_links = pages.select('a[class^="_pagination__item_"]')
-            last_page_link = last_page_links[-1]
-            last_page_no = int(urlparse.parse_qs(last_page_link['href'].split('?')[1])['page'][0])
+            ## The links include a 'next' arrow and, for long stories,
+            ## may not list every page, so take the highest page number
+            ## present rather than assuming the last link is the last page.
+            page_nos = []
+            for a in last_page_links:
+                href = a.get('href','')
+                if '?' in href:
+                    qs = urlparse.parse_qs(href.split('?')[1])
+                    if 'page' in qs:
+                        page_nos.append(int(qs['page'][0]))
+            last_page_no = max(page_nos) if page_nos else 1
             # logger.debug(last_page_no)
             for page_no in range(2, last_page_no+1):
                 page_url = url +  "?page=%s" % page_no
@@ -566,6 +583,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         page_soup = self.make_soup(fullhtml)
         fullhtml = self.utf8FromSoup(url, self.make_soup(fullhtml))
         fullhtml = chapter_description + fullhtml
+        fullhtml = str(fullhtml)
         fullhtml = str(fullhtml)
 
         return fullhtml
