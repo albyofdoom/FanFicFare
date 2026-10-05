@@ -424,7 +424,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             self.story.extendList('category',[ stripHTML(t) for t in soup.select('section p[class^="_description_"] > a') ])
 
             if self.getConfig("tags_from_chapters"):
-                self.story.extendList('eroticatags', [str(t).title() for t in re.findall(r'tag:\"(.+?)\",', story_jsdict)])
+                self.story.extendList('eroticatags', [unicode(t).title() for t in re.findall(r'tag:\"(.+?)\",', story_jsdict)])
 
             for chapteratag in soup.select('section li[class^="_item_"] > a'):
                 chapter_title = stripHTML(chapteratag)
@@ -502,7 +502,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
 
                     ## Collect tags from series/story page if tags_from_chapters is enabled
                     if self.getConfig("tags_from_chapters"):
-                        self.story.extendList('eroticatags', [ str(t['tag']).title() for t in chap['tags'] ])
+                        self.story.extendList('eroticatags', [ unicode(t['tag']).title() for t in chap['tags'] ])
         except Exception as e:
             logger.warning("Processing JSON failed. (%s)"%e)
 
@@ -521,7 +521,6 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         fullhtml = ""
         for aa_ht_div in page_soup.find_all('div', 'aa_ht') + page_soup.select('div[class^="_article__content_"]'):
             if aa_ht_div.div:
-                html = str(aa_ht_div.div)
                 html = str(aa_ht_div.div)
                 # Strip some starting and ending tags,
                 html = re.sub(r'^<div.*?>', r'', html)
@@ -580,7 +579,6 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         page_soup = self.make_soup(fullhtml)
         fullhtml = self.utf8FromSoup(url, self.make_soup(fullhtml))
         fullhtml = chapter_description + fullhtml
-        fullhtml = str(fullhtml)
         fullhtml = str(fullhtml)
 
         return fullhtml
