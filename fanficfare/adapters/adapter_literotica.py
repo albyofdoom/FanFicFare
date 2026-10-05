@@ -355,7 +355,6 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
 
         else:
             js_series_id = str(re.search(r'{id:(\d+?),', story_jsdict).group(1))
-            js_series_id = str(re.search(r'{id:(\d+?),', story_jsdict).group(1))
             seriesWorks_jsdict_point = re.search(r'_\$HY\.r\[\"(?:seriesWorks)\[\\\".+?\"]=\$R\[\d+]=\((.+?)=', data).group(1)
             story_jsdict += re.search(r']\(' + re.escape(seriesWorks_jsdict_point) + r'(.+?)}]\);', data).group(1)
             ## Multi-chapter stories.  AKA multi-part 'Story Series'.
@@ -425,7 +424,6 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             self.story.extendList('category',[ stripHTML(t) for t in soup.select('section p[class^="_description_"] > a') ])
 
             if self.getConfig("tags_from_chapters"):
-                self.story.extendList('eroticatags', [str(t).title() for t in re.findall(r'tag:\"(.+?)\",', story_jsdict)])
                 self.story.extendList('eroticatags', [str(t).title() for t in re.findall(r'tag:\"(.+?)\",', story_jsdict)])
 
             for chapteratag in soup.select('section li[class^="_item_"] > a'):
@@ -504,7 +502,6 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
 
                     ## Collect tags from series/story page if tags_from_chapters is enabled
                     if self.getConfig("tags_from_chapters"):
-                        self.story.extendList('eroticatags', [ str(t['tag']).title() for t in chap['tags'] ])
                         self.story.extendList('eroticatags', [ str(t['tag']).title() for t in chap['tags'] ])
         except Exception as e:
             logger.warning("Processing JSON failed. (%s)"%e)
