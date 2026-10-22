@@ -19,16 +19,12 @@ import logging
 logger = logging.getLogger(__name__)
 import re
 import json
+from copy import copy
+from html import escape
 
 from bs4.element import Comment
 from ..htmlcleanup import stripHTML
 from .. import exceptions as exceptions
-
-# Provide Python 3 compatibility for code that calls `unicode()`
-try:
-    unicode
-except NameError:
-    unicode = str
 
 
 from urllib import parse as urlparse
@@ -241,26 +237,19 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         # logger.debug(authorurl)
         self.story.setMetadata('author', stripHTML(authora))
         self.story.setMetadata('authorUrl', authorurl)
-        
-        # Determine authorId - prefer numerical IDs
-        author_id = None
-        if '?' in authorurl:
-            # Old format: memberpage.php?uid=XXXXX
-            author_id = urlparse.parse_qs(authorurl.split('?')[1])['uid'][0]
-        elif '/authors/' in authorurl:
-            # New format: /authors/username/works[/stories]
-            # Try to extract numeric userid from JSON data first
-            userid_match = re.search(r'"userid":"(\d+)"', data)
-            if not userid_match:
-                userid_match = re.search(r'userid:(\d+)', data)
-            if userid_match:
-                author_id = userid_match.group(1)
-            else:
-                # Fallback to username from URL path
-                author_id = authorurl.split('/authors/')[1].split('/')[0]
-        else: # if all else fails
-            author_id = stripHTML(authora)
-        
+        author_id = urlparse.parse_qs(urlparse.urlparse(authorurl).query).get('uid', [None])[0]
+        if not author_id:
+            if '/authors/' in authorurl:
+                author_id = urlparse.urlparse(authorurl).path.split('/authors/')[1].split('/')[0]
+            else: # if all else fails
+                author_id = stripHTML(authora)
+            if self.getConfig("use_numeric_author_id"):
+                ## Scope to this work/series, excluding recommendations and other users.
+                userids = set(re.findall(r'(?:^|[,{])\s*"?(?:userid|user_id)"?\s*:\s*"?(\d+)"?(?=\s*[,}])', story_jsdict))
+                if len(userids) == 1:
+                    author_id = userids.pop()
+                else:
+                    logger.debug("No unambiguous numeric author ID; keeping URL/name ID")
         self.story.setMetadata('authorId', author_id)
 
         if soup.select('div#tabpanel-tags'):
@@ -271,40 +260,45 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             self.story.extendList('eroticatags', [ stripHTML(t).title() for t in soup.select('div[class^="_widget__tags_"] a[class^="_tag_item_"]') ])
         # logger.debug(self.story.getList('eroticatags'))
 
-        ## Initialize description list
+        ## look first for 'Series Introduction', then Info panel short desc
+        ## series can have either, so put in common code.
         desc = []
-        introtag = soup.select_one('div[class^="_content_"] > div[class^="_introduction-wrap"] > p')
+        ## Single-story pages also use this class around the story text.
+        introtag = None if isSingleStory else soup.select_one('div[class^="_introduction-wrap"]')
         descdiv = soup.select_one('div#tabpanel-info div.bn_B') or \
                   soup.select_one('div[class^="_tab__pane_"] div[class^="_widget__info_"]')
-        # Do not append intro/short desc here; defer until single vs multi
-        # chapter handling below to avoid adding the same text twice.
+        if introtag and stripHTML(introtag):
+            # make sure there's something in the tag.
+            # logger.debug("intro %s"%introtag)
+            desc.append(str(introtag))
+        elif descdiv and stripHTML(descdiv):
+            # make sure there's something in the tag.
+            # logger.debug("desc %s"%descdiv)
+            desc.append(str(descdiv))
+        ## The site sometimes supplies only a generated series chapter count.
+        if not isSingleStory and desc and re.fullmatch(r'Series ["\u201c].+?["\u201d] has \d+ chapters?\.?', stripHTML(''.join(desc))):
+            desc = []
+        if isSingleStory and not desc:
+            meta_desc = soup.find('meta', attrs={'name':'description'})
+            if meta_desc and meta_desc.get('content'):
+                desc.append('<p>%s</p>' % escape(meta_desc['content']))
+        if not desc or self.getConfig("include_chapter_descriptions_in_summary"):
+            ## Only for backward compatibility with 'stories' that
+            ## don't have an intro or short desc.
+            descriptions = []
+            chapterdesctags = soup.select('section ul[class^="_list_"] p[class^="_description_"]') or soup.select('p.br_rk')
+            for i, chapterdesctag in enumerate(chapterdesctags):
+                ## Work on a copy; category links in the page are used below.
+                chapterdesctag = copy(chapterdesctag)
+                if chapterdesctag.a:
+                    chapterdesctag.a.extract()
+                descriptions.append("%d. %s" % (i + 1, escape(stripHTML(chapterdesctag))))
+            if descriptions:
+                desc.append("<p>"+"</p>\n<p>".join(descriptions)+"</p>")
 
-        # Defer setting the description until after we determine
-        # whether this is a single story or a multi-chapter series
-        # to avoid setting it twice (which caused duplicated text).
+        self.setDescription(self.url,u''.join(desc))
 
         if isSingleStory:
-            ## For single-chapter stories, use meta description tag
-            meta_desc = soup.find("meta", {"name": "description"})
-            if meta_desc and meta_desc.get('content'):
-                desc.append(unicode("<p>%s</p>" % meta_desc['content']))
-
-            # If no intro/short desc present (desc is empty) or
-            # include_chapter_descriptions_in_summary is enabled, build
-            # a fallback list of chapter descriptions and append once.
-            if not desc or self.getConfig("include_chapter_descriptions_in_summary"):
-                descriptions = []
-                for i, chapterdesctag in enumerate(soup.select('section ul[class^="_list_"] p[class^="_description_"]')):
-                    # remove category link, but only temporarily
-                    a = chapterdesctag.a.extract()
-                    descriptions.append("%d. %s" % (i + 1, stripHTML(chapterdesctag)))
-                    # now put it back--it's used below
-                    chapterdesctag.append(a)
-                if descriptions:
-                    desc.append(unicode("<p>"+"</p>\n<p>".join(descriptions)+"</p>"))
-
-            self.setDescription(self.url, u''.join(desc))
-
             ## one-shots don't *display* date info, but they have it
             ## hidden in <script>
             ## shows _date_approve "date_approve":"01/31/2024"
@@ -325,19 +319,6 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             if rateall:
                 self.story.setMetadata('averrating', '%4.2f' % float(rateall.group(1)))
 
-            ## Extract view_count, favorite_count, and rate_count for one-shots
-            viewcount = re.search(r'view_count:(\d+)',data)
-            if viewcount:
-                self.story.setMetadata('views', unicode(viewcount.group(1)))
-            
-            favoritecount = re.search(r'favorite(?:s)?_count:(\d+)',data)
-            if favoritecount:
-                self.story.setMetadata('favorites', unicode(favoritecount.group(1)))
-            
-            ratecount = re.search(r'rate_count:(\d+)',data)
-            if ratecount:
-                self.story.setMetadata('votes', unicode(ratecount.group(1)))
-
             ## one-shots assumed completed.
             self.story.setMetadata('status','Completed')
 
@@ -356,50 +337,9 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         else:
             js_series_id = str(re.search(r'{id:(\d+?),', story_jsdict).group(1))
             seriesWorks_jsdict_point = re.search(r'_\$HY\.r\[\"(?:seriesWorks)\[\\\".+?\"]=\$R\[\d+]=\((.+?)=', data).group(1)
-            story_jsdict += re.search(r']\(' + re.escape(seriesWorks_jsdict_point) + r'(.+?)}]\);', data).group(1)
+            chapter_jsdict = re.search(r']\(' + re.escape(seriesWorks_jsdict_point) + r'(.+?)}]\);', data).group(1)
+            story_jsdict += chapter_jsdict
             ## Multi-chapter stories.  AKA multi-part 'Story Series'.
-            
-            ## look first for 'Series Introduction', then Info panel short desc
-            introtag = soup.select_one('div[class^="_introduction-wrap"] > p')
-            descdiv = soup.select_one('div#tabpanel-info div.bn_B') or \
-                      soup.select_one('div[class^="_tab__pane_"] div[class^="_widget__info_"]')
-            if introtag and stripHTML(introtag):
-                # make sure there's something in the tag.
-                # logger.debug("intro %s"%introtag)
-                desc.append(unicode(introtag))
-            elif descdiv and stripHTML(descdiv):
-                # make sure there's something in the tag.
-                # logger.debug("desc %s"%descdiv)
-                desc.append(unicode(descdiv))
-            
-            # Check if description is just a generic "Series ... has X chapters" message
-            if desc:
-                desc_text = stripHTML(u''.join(desc))
-                # Match both straight quotes and curly quotes, and both "chapter" and "chapters"
-                if re.match(r'Series ["\u201C].+?["\u201D] has \d+ chapters?\.?', desc_text):
-                    desc = []  # Clear generic description and fall back to chapter descriptions
-            
-            if not desc or self.getConfig("include_chapter_descriptions_in_summary"):
-                ## Only for backward compatibility with 'stories' that
-                ## don't have an intro or short desc.
-                descriptions = []
-                ## Look for both old format (p.br_rk) and new format chapter descriptions
-                ## (within list items, not the series-level description)
-                chapter_desc_tags = soup.select('p.br_rk') or soup.select('ul[class^="_list_"] li[class^="_item_"] p[class^="_description_"]')
-                for i, chapterdesctag in enumerate(chapter_desc_tags):
-                    # remove category link, but only temporarily
-                    a = chapterdesctag.find('a')
-                    if a:
-                        a = a.extract()
-                    descriptions.append("%d. %s" % (i + 1, stripHTML(chapterdesctag)))
-                    # now put it back--it's used below
-                    if a:
-                        chapterdesctag.append(a)
-                if descriptions:
-                    desc.append(unicode("<p>"+"</p>\n<p>".join(descriptions)+"</p>"))
-
-            self.setDescription(self.url, u''.join(desc))
-
             bn_antags = soup.select('div[class^="_date_container_"] > div[class^="_files__date_"]')
             # logger.debug(bn_antags)
             if bn_antags and not self.getConfig("dates_from_chapters"):
@@ -424,7 +364,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             self.story.extendList('category',[ stripHTML(t) for t in soup.select('section p[class^="_description_"] > a') ])
 
             if self.getConfig("tags_from_chapters"):
-                self.story.extendList('eroticatags', [unicode(t).title() for t in re.findall(r'tag:\"(.+?)\",', story_jsdict)])
+                self.story.extendList('eroticatags', [str(t).title() for t in re.findall(r'tag:\"(.+?)\",', story_jsdict)])
 
             for chapteratag in soup.select('section li[class^="_item_"] > a'):
                 chapter_title = stripHTML(chapteratag)
@@ -439,40 +379,18 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
             if coverimg:
                 self.setCoverImage(self.url,coverimg['src'])
 
-            ## Extract views, favorites, votes for series from hydration data
-            ## Similar to dates/ratings above - sum all per-chapter values when
-            ## counts match the number of chapters found.
-            ## If only one value or more values than chapters are found, use the first
-            ## (which is typically the series-level aggregate in the hydration data).
-            viewcounts = re.findall(r'view_count:(\d+)', data)
-            if viewcounts:
-                if len(viewcounts) == self.num_chapters():
-                    # Multiple per-chapter values - sum them
-                    total_views = sum(int(v) for v in viewcounts)
-                    self.story.setMetadata('views', unicode(total_views))
-                elif len(viewcounts) >= 1:
-                    # Single value or mixed (series + chapters) - use first (series-level aggregate)
-                    self.story.setMetadata('views', unicode(viewcounts[0]))
-
-            favoritecounts = re.findall(r'favorite(?:s)?_count:(\d+)', data)
-            if favoritecounts:
-                if len(favoritecounts) == self.num_chapters():
-                    # Multiple per-chapter values - sum them
-                    total_favorites = sum(int(f) for f in favoritecounts)
-                    self.story.setMetadata('favorites', unicode(total_favorites))
-                elif len(favoritecounts) >= 1:
-                    # Single value or mixed (series + chapters) - use first (series-level aggregate)
-                    self.story.setMetadata('favorites', unicode(favoritecounts[0]))
-
-            ratecounts = re.findall(r'rate_count:(\d+)', data)
-            if ratecounts:
-                if len(ratecounts) == self.num_chapters():
-                    # Multiple per-chapter values - sum them
-                    total_votes = sum(int(r) for r in ratecounts)
-                    self.story.setMetadata('votes', unicode(total_votes))
-                elif len(ratecounts) >= 1:
-                    # Single value or mixed (series + chapters) - use first (series-level aggregate)
-                    self.story.setMetadata('votes', unicode(ratecounts[0]))
+        if self.getConfig("collect_story_statistics"):
+            ## Series statistics are sums of chapter counts, not unique readers/fans.
+            ## Never guess from page-wide values or partially available chapter data.
+            statistics_data = story_jsdict if isSingleStory else chapter_jsdict
+            for entry, field in (('views', 'view_count'),
+                                 ('favorites', 'favorites?_count'),
+                                 ('votes', 'rate_count')):
+                counts = re.findall(r'(?:^|[,{])\s*"?(?:' + field + r')"?\s*:\s*"?(\d+)"?(?=\s*[,}]|$)', statistics_data)
+                if counts and len(counts) == self.num_chapters():
+                    self.story.setMetadata(entry, str(sum(int(x) for x in counts)))
+                else:
+                    logger.debug("Skipping incomplete or ambiguous %s statistics", entry)
 
         #### Attempting averrating from JS metadata.
         #### also alternate chapters from json
@@ -502,7 +420,7 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
 
                     ## Collect tags from series/story page if tags_from_chapters is enabled
                     if self.getConfig("tags_from_chapters"):
-                        self.story.extendList('eroticatags', [ unicode(t['tag']).title() for t in chap['tags'] ])
+                        self.story.extendList('eroticatags', [ str(t['tag']).title() for t in chap['tags'] ])
         except Exception as e:
             logger.warning("Processing JSON failed. (%s)"%e)
 
@@ -546,9 +464,9 @@ class LiteroticaSiteAdapter(BaseSiteAdapter):
         fullhtml = ""
         chapter_description = ''
         if self.getConfig("description_in_chapter"):
-            chapter_description = page_soup.find("meta", {"name" : "description"})['content']
-            # logger.debug("\tChapter description: %s" % chapter_description)
-            chapter_description = '<p><b>Description:</b> %s</p><hr />' % chapter_description
+            meta_desc = page_soup.find("meta", {"name" : "description"})
+            if meta_desc and meta_desc.get('content'):
+                chapter_description = '<p><b>Description:</b> %s</p><hr />' % escape(meta_desc['content'])
         fullhtml += self.getPageText(raw_page, url)
         if pages:
             ## look for highest numbered page, they're not all listed
