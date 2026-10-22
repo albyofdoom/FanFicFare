@@ -390,6 +390,7 @@ def get_valid_keywords():
                  'file_start',
                  'fileformat',
                  'find_chapters',
+                 'first_chapter',
                  'fix_pseudo_html',
                  'flaresolverr_proxy_address',
                  'flaresolverr_proxy_port',
@@ -409,6 +410,7 @@ def get_valid_keywords():
                  'keep_empty_tags',
                  'keep_html_attrs',
                  'keep_summary_html',
+                 'last_chapter',
                  'logpage_end',
                  'logpage_entries',
                  'logpage_entry',
@@ -1075,6 +1077,11 @@ class Configuration(ConfigParser):
 
             if self.getConfig('progressbar'):
                 fetchers.ProgressBarDecorator().decorate_fetcher(self.fetcher)
+
+            ## Way to pass a quit flag function down to fetcher level.
+            self.quitdecor = fetchers.QuitDecorator()
+            self.quitdecor.decorate_fetcher(self.fetcher)
+
         if cookiejar is not None:
             self.fetcher.set_cookiejar(cookiejar)
         return self.fetcher
@@ -1082,6 +1089,10 @@ class Configuration(ConfigParser):
     ## used by plugin to change time for ffnet.
     def set_sleep_override(self,val):
         return self.sleeper.set_sleep_override(val)
+
+    ## used by plugin to set the quit flag function
+    def set_quit(self,fn):
+        self.quitdecor.set_quit(fn)
 
     def get_cookiejar(self,filename=None,mozilla=False):
         return self.get_fetcher().get_cookiejar(filename,mozilla)
