@@ -13,11 +13,16 @@ import argparse
 import io
 import os
 
+import pytest
+
 from fanficfare import cli
 from fanficfare.configurable import Configuration
+from fanficfare.epubutils import get_dcsource_chaptercount, get_update_data
+from fanficfare.writers.writer_epub import EpubWriter
 
 from tests.adapters.update_harness import (CH, STORY_URL, StagedSiteAdapter,
-                                           chapters_for, staged_download)
+                                           chapters_for, staged_download,
+                                           strip_chapter_data_meta)
 
 DEFAULTS_INI = os.path.join(os.path.dirname(cli.__file__), 'defaults.ini')
 
@@ -74,11 +79,11 @@ def build_config(personal):
 
 
 def run_update(monkeypatch, capsys, tmp_path, epub_chapters, site_chapters,
-               personal=PERSONAL_PRESERVE_ON, **options):
+               personal=PERSONAL_PRESERVE_ON, epub_bytes=None, **options):
     """Update an epub holding epub_chapters against a site serving
     site_chapters.  Returns (adapter, write_calls, warned)."""
     epub = tmp_path / 'story.epub'
-    epub.write_bytes(staged_download(
+    epub.write_bytes(epub_bytes if epub_bytes is not None else staged_download(
         build_config(PERSONAL_PRESERVE_ON),
         {n: CHAPTER_BODY % n for n in epub_chapters}))
 
@@ -166,3 +171,66 @@ def test_equal_count_swap_without_preserve_skips(monkeypatch, capsys,
     assert write_calls == []
     assert 'already contains 5 chapters.' in output
     assert warned == []
+
+
+@pytest.mark.parametrize('legacy', [False, True])
+@pytest.mark.parametrize('try_limit', [1, 5])
+@pytest.mark.parametrize('personal', [PERSONAL_PRESERVE_OFF, PERSONAL_PRESERVE_ON],
+                         ids=['preserve-off', 'preserve-on'])
+def test_update_retries_error_chapters(monkeypatch, capsys, tmp_path,
+                                      legacy, try_limit, personal):
+    """Failed and unattempted chapters must not block an ordinary update."""
+    configuration = build_config(
+        personal + 'continue_on_chapter_error:true\n'
+        'continue_on_chapter_error_try_limit:%d\n' % try_limit)
+    initial = StagedSiteAdapter(configuration, STORY_URL)
+    initial.site_chapters = chapters_for({n: '' for n in ALL_CHAPTERS})
+    # The missing second chapter raises a download error.  With limit=1,
+    # subsequent chapters become error placeholders without being fetched.
+    initial.content = {CH % n: CHAPTER_BODY % n for n in [1, 3, 4, 5]}
+    initial.getStory()
+    failed = [2, 3, 4, 5] if try_limit == 1 else [2]
+    assert initial.story.chapter_error_count == len(failed)
+    out = io.BytesIO()
+    EpubWriter(configuration, initial).writeStory(outstream=out)
+    epub_bytes = out.getvalue()
+    if legacy:
+        epub_bytes = strip_chapter_data_meta(epub_bytes)
+
+    fetched = []
+    original_fetch = StagedSiteAdapter.getChapterTextNum
+
+    def track_fetch(self, url, index):
+        fetched.append(url)
+        return original_fetch(self, url, index)
+
+    monkeypatch.setattr(StagedSiteAdapter, 'getChapterTextNum', track_fetch)
+    adapter, write_calls, warned, output = run_update(
+        monkeypatch, capsys, tmp_path, ALL_CHAPTERS, ALL_CHAPTERS,
+        personal=personal, epub_bytes=epub_bytes)
+
+    assert adapter.storyDone is True
+    assert fetched == [CH % n for n in failed]
+    assert adapter.story.chapter_error_count == 0
+    assert write_calls == ['epub']
+    assert warned == []
+    assert 'already contains' not in output
+
+    # Verify both readers used by CLI and Calibre exclude the placeholders
+    # from their counts and reusable chapter bodies/metadata.
+    expected_good_urls = {CH % n for n in ALL_CHAPTERS if n not in failed}
+    data = get_update_data(io.BytesIO(epub_bytes))
+    assert get_dcsource_chaptercount(io.BytesIO(epub_bytes)) == \
+        (STORY_URL, len(expected_good_urls))
+    assert data[1] == len(data[2]) == len(expected_good_urls)
+    assert set(data[7]) == set(data[8]) == expected_good_urls
+
+    repaired = io.BytesIO()
+    EpubWriter(adapter.configuration, adapter).writeStory(outstream=repaired)
+    repaired_data = get_update_data(io.BytesIO(repaired.getvalue()))
+    assert repaired_data[1] == 5
+    assert list(repaired_data[7]) == [CH % n for n in ALL_CHAPTERS]
+    assert all('(CHAPTER ERROR)' not in chapter['title']
+               for chapter in repaired_data[8].values())
+    for n, soup in enumerate(repaired_data[2], 1):
+        assert CHAPTER_BODY % n in str(soup)
