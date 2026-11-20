@@ -274,11 +274,10 @@ def get_update_data(inputio,
                         if not currenturl:
                             chapurltag = soup.find('meta',{'name':'chapterurl'})
                             if chapurltag:
-                                # logger.debug("chapurltag['content']:%s"%chapurltag['content'])
                                 currenturl = chapurltag['content']
+                                # logger.debug("chapurltag['content']:%s"%chapurltag['content'])
                         if currenturl == "chapter url removed due to failure":
-                            # Don't count/reuse error placeholders, whether the
-                            # URL came from JSON or the legacy chapterurl tag.
+                            # don't count/include continue_on_chapter_error chapters.
                             continue
                         if currenturl and currenturl not in urlsoups: # keep first found if more than one.
                             urlsoups[currenturl] = bodysoup

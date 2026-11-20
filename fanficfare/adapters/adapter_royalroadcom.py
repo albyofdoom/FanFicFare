@@ -108,37 +108,148 @@ class RoyalRoadAdapter(BaseSiteAdapter):
     # rr won't send you future updates if you aren't 'caught up'
     # on the story.  Login isn't required but logging in will
     # mark stories you've downloaded as 'read' on rr.
+    #
+    # Patched 2026-11-10 (Kaleaon fork): the previous version assumed
+    # the login GET always returns a form containing
+    # __RequestVerificationToken and that a successful POST never
+    # contains the words "Sign in".  Both assumptions broke in late
+    # 2026:
+    #  * RoyalRoad now serves an Anubis proof-of-work page (and, on
+    #    some networks, a Cloudflare challenge) instead of the login
+    #    form to non-browser clients.  The old code crashed with
+    #    TypeError: 'NoneType' object is not subscriptable instead of
+    #    saying so.  Those pages can only be passed with a real
+    #    browser engine -- in the Calibre plugin that is Camoufox:
+    #        [www.royalroad.com]
+    #        use_browser_cache:false
+    #        use_camoufox:true
+    #  * With Camoufox, the browser session stays logged in between
+    #    stories, so a later performLogin() GET may be redirected to
+    #    an already-logged-in page with no login form at all.  The
+    #    old code crashed the same way.  (Upstream #1444 reports
+    #    exactly this: login works for the first story after starting
+    #    Calibre, then fails for the rest.)
+    #  * "Sign in" appears in page scripts/footers on pages that are
+    #    not the login form, so it is not a reliable failure test.
+    # This version is form-driven instead: it copies every hidden
+    # field the site actually sent, fills the email/password fields
+    # by their real names, treats "still looking at a password field
+    # after POST" as failure, and reports a bot-wall page as a
+    # bot-wall -- not as bad credentials.
     def performLogin(self):
-        params = {}
-
         if self.password:
-            params['Email'] = self.username
-            params['password'] = self.password
+            email = self.username
+            password = self.password
         else:
-            params['Email'] = self.getConfig("username")
-            params['password'] = self.getConfig("password")
+            email = self.getConfig("username")
+            password = self.getConfig("password")
 
-        if not params['password']:
+        if not password:
             return
 
         loginUrl = 'https://' + self.getSiteDomain() + '/account/login'
         logger.debug("Will now login to URL (%s) as (%s)" % (loginUrl,
-                                                              params['Email']))
+                                                              email))
 
         ## need to pull empty login page first to get request token
-        soup = self.make_soup(self.get_request(loginUrl))
-        ## FYI, this will fail if cookiejar is shared, but
-        ## use_basic_cache is false.
-        params['__RequestVerificationToken']=soup.find('input', {'name':'__RequestVerificationToken'})['value']
+        login_data = self.get_request(loginUrl)
+        soup = self.make_soup(login_data)
 
-        d = self.post_request(loginUrl, params)
-        if "Sign in" in d : #Member Account
-            logger.info("Failed to login to URL %s as %s (requires Email not name)" % (loginUrl,
-                                                             params['Email']))
-            raise exceptions.FailedToLogin(self.url,"Failed to login as %s (RoyalRoad requires Email not name)" % params['Email'])
-            return False
-        else:
-            return True
+        def is_bot_wall(data, sp):
+            if data and ("Making sure you're not a bot" in data
+                         or 'id="anubis_challenge"' in data
+                         or "Just a moment..." in data):
+                return True
+            title = sp.find('title')
+            return bool(title and title.string
+                        and ("not a bot" in title.string
+                             or "Just a moment" in title.string))
+
+        def find_login_form(sp):
+            # the form that contains a password field, if any
+            for form in sp.find_all('form'):
+                if form.find('input', {'type': 'password'}):
+                    return form
+            return None
+
+        if is_bot_wall(login_data, soup):
+            raise exceptions.FailedToLogin(
+                self.url,
+                "RoyalRoad served a bot-check page (Anubis/Cloudflare) "
+                "instead of the login form, so FanFicFare never got to "
+                "try your password. Use the Calibre plugin with "
+                "use_camoufox:true and use_browser_cache:false under "
+                "[www.royalroad.com] in personal.ini, restart Calibre, "
+                "and retry -- the first Camoufox download can be slow "
+                "while Calibre installs it.")
+
+        form = find_login_form(soup)
+        if form is None:
+            # No login form: with a shared Camoufox/browser session
+            # this normally means we are already logged in and RR
+            # redirected us elsewhere.  Only claim that when the page
+            # shows logged-in markers; otherwise say what happened.
+            if soup.find('a', href=re.compile(r'/account/(logout|signout)')) \
+               or soup.find('a', href=re.compile(r'/user/profile/')) \
+               or "Sign out" in login_data:
+                logger.debug("No login form on login page and page "
+                             "looks logged in; skipping login POST.")
+                return True
+            raise exceptions.FailedToLogin(
+                self.url,
+                "RoyalRoad did not return a login form at %s, so "
+                "FanFicFare could not log in as %s. The site may have "
+                "changed its login page or be blocking this client; "
+                "if you are not using it already, try "
+                "use_camoufox:true (Calibre plugin) under "
+                "[www.royalroad.com]." % (loginUrl, email))
+
+        params = {}
+        email_field = 'Email'
+        password_field = 'password'
+        for field in form.find_all('input'):
+            name = field.get('name')
+            if not name:
+                continue
+            ftype = (field.get('type') or 'text').lower()
+            if ftype == 'password':
+                password_field = name
+            elif name.lower() == 'email' or ftype == 'email':
+                email_field = name
+            elif ftype in ('hidden', 'checkbox') or name == '__RequestVerificationToken':
+                # copy hidden fields (verification token, ReturnUrl,
+                # etc.) and any defaulted checkbox exactly as sent
+                params[name] = field.get('value') or ''
+        params[email_field] = email
+        params[password_field] = password
+        # the login form's own action, if it posts somewhere else
+        postUrl = loginUrl
+        action = form.get('action')
+        if action:
+            from urllib.parse import urljoin
+            postUrl = urljoin(loginUrl, action)
+
+        d = self.post_request(postUrl, params)
+        if is_bot_wall(d, self.make_soup(d)):
+            raise exceptions.FailedToLogin(
+                self.url,
+                "RoyalRoad served a bot-check page (Anubis/Cloudflare) "
+                "when FanFicFare submitted the login for %s, so the "
+                "login did not go through. Use the Calibre plugin "
+                "with use_camoufox:true and use_browser_cache:false "
+                "under [www.royalroad.com] in personal.ini." % email)
+        result_soup = self.make_soup(d)
+        if find_login_form(result_soup) is not None:
+            logger.info("Failed to login to URL %s as %s -- still on "
+                        "login form after POST" % (loginUrl, email))
+            raise exceptions.FailedToLogin(
+                self.url,
+                "Failed to login as %s -- RoyalRoad returned the "
+                "login form again. Check that the username in "
+                "personal.ini is your RoyalRoad EMAIL address (not "
+                "your display name) and that the password is correct."
+                % email)
+        return True
 
     ## RR chapter URL only requires the chapter ID number field to be correct, story ID and title values are ignored
     ## URL format after the domain /fiction/ is long form, storyID/storyTitle/chapter/chapterID/chapterTitle
@@ -231,6 +342,7 @@ class RoyalRoadAdapter(BaseSiteAdapter):
         # "url":"/fiction/41656/chaotic-craftsman-worships-the-cube/chapter/654078/ch1-prologue"}, ...
         chapters_js = re.search(r'^ *window.chapters *= *(.*) *; *$',data,flags=re.MULTILINE)
         # logger.debug(chapters_js)
+        last_chapter_date = None
         if chapters_js:
             chapters_info = json.loads(chapters_js.group(1))
             # logger.debug(json.dumps(chapters_info, sort_keys=True,
@@ -242,6 +354,8 @@ class RoyalRoadAdapter(BaseSiteAdapter):
                     chapterUrl = 'https://' + self.getSiteDomain() + chap['url']
                     ## replace 'Z' - doesn't work in earlier py3 versions.
                     chapterDate = datetime.fromisoformat(chap['date'].replace('Z','+00:00'))
+                    if last_chapter_date is None or chapterDate > last_chapter_date:
+                        last_chapter_date = chapterDate
                     date_format = self.getConfig("datechapter_format", self.getConfig("datePublished_format", self.dateformat))
                     if self.add_chapter(chap['title'], chapterUrl, {'date': chapterDate.strftime(date_format)}):
                     ## str to match lookup.
@@ -251,7 +365,16 @@ class RoyalRoadAdapter(BaseSiteAdapter):
 
         self.setDescription(url,story_json['description'])
 
-        self.story.setMetadata('dateUpdated', datetime.fromisoformat(story_json['dateModified']))
+        dateUpdated = datetime.fromisoformat(story_json['dateModified'])
+        # RR's JSON-LD dateModified is sometimes stale (== datePublished
+        # even when newer chapters exist). Fall back to last chapter date.
+        if last_chapter_date is not None:
+            if dateUpdated.tzinfo is None and last_chapter_date.tzinfo is not None:
+                dateUpdated = dateUpdated.replace(tzinfo=last_chapter_date.tzinfo)
+            if last_chapter_date > dateUpdated:
+                logger.debug("dateModified(%s) older than last chapter date(%s), using chapter date"%(dateUpdated,last_chapter_date))
+                dateUpdated = last_chapter_date
+        self.story.setMetadata('dateUpdated', dateUpdated)
         self.story.setMetadata('datePublished', datetime.fromisoformat(story_json['datePublished']))
 
         for a in soup.select('div#chapterHeroData a[href^="/fictions/search?tagsAdd="]'):
@@ -336,6 +459,8 @@ class RoyalRoadAdapter(BaseSiteAdapter):
         # "url":"/fiction/41656/chaotic-craftsman-worships-the-cube/chapter/654078/ch1-prologue"}, ...
         chapters_js = re.search(r'^ *window.chapters *= *(.*) *; *$',data,flags=re.MULTILINE)
         # logger.debug(chapters_js)
+        first_chapter_date = None
+        last_chapter_date = None
         if chapters_js:
             chapters_info = json.loads(chapters_js.group(1))
             # logger.debug(json.dumps(chapters_info, sort_keys=True,
@@ -347,16 +472,22 @@ class RoyalRoadAdapter(BaseSiteAdapter):
                     chapterUrl = 'https://' + self.getSiteDomain() + chap['url']
                     ## replace 'Z' - doesn't work in earlier py3 versions.
                     chapterDate = datetime.fromisoformat(chap['date'].replace('Z','+00:00'))
+                    if first_chapter_date is None or chapterDate < first_chapter_date:
+                        first_chapter_date = chapterDate
+                    if last_chapter_date is None or chapterDate > last_chapter_date:
+                        last_chapter_date = chapterDate
                     date_format = self.getConfig("datechapter_format", self.getConfig("datePublished_format", self.dateformat))
                     if self.add_chapter(chap['title'], chapterUrl, {'date': chapterDate.strftime(date_format)}):
                     ## str to match lookup.
                         self.chapterURLIndex[str(chap['id'])] = self.num_chapters() - 1
 
-        description = soup.select_one('div.description div.hidden-content')
+        description = soup.select_one('div.description div')
         self.setDescription(url,description)
 
-        self.story.setMetadata('dateUpdated', self.make_date(tds[-1][1]))
-        self.story.setMetadata('datePublished', self.make_date(tds[0][1]))
+        ## using first / last chapter entries broken after chapter
+        ## pagination and/or could be wrong, use earliest/latest
+        self.story.setMetadata('dateUpdated', last_chapter_date)
+        self.story.setMetadata('datePublished', first_chapter_date)
 
         for a in soup.find_all('a',{'class':'fiction-tag'}): # not all stories have genre
             genre = stripHTML(a)

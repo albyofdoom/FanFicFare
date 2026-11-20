@@ -763,8 +763,8 @@ class FanFicFarePlugin(InterfaceAction):
                               extraoptions={},
                               anthology=False,
                               ini_snippet_name=None):
-        # logger.debug("finish_urls_from_page")
-        # logger.debug(frompage)
+        logger.debug("finish_urls_from_page")
+        logger.debug(frompage)
         url_list = frompage.get('urllist',[])
         if url_list:
             # make a copy before adding to avoid changing passed param
@@ -1104,7 +1104,7 @@ class FanFicFarePlugin(InterfaceAction):
                                 ini_snippet_name=None,
                                 urlmapfile={}):
         logger.debug("finish_update_anthology")
-        logger.debug(frompage)
+        # logger.debug(frompage)
 
         url_list_text = "\n".join(frompage['urllist'])
         # AddNewDialog collects URLs, format and presents buttons.
@@ -1165,7 +1165,6 @@ class FanFicFarePlugin(InterfaceAction):
                 logger.debug("Canceling anthology update due to removed stories.")
                 return
 
-        # Now that we've
         self.prep_downloads( options, update_books, merge=True )
 
     def update_dialog(self,checked,id_list=None,extraoptions={}):
@@ -1339,8 +1338,19 @@ class FanFicFarePlugin(InterfaceAction):
                     rejecturllist.remove(url)
         return False
 
-    def get_story_metadata_only(self,adapter):
+    def get_story_metadata_only(self,adapter,options):
         url = adapter.url
+
+        storydata = options.get('frompage',{}).get('storydata')
+        # ignore_chapter_url_list requires chapter list to compare
+        if storydata and not adapter.getConfig('ignore_chapter_url_list'):
+            for sd in storydata:
+                surl = adapters.getNormalStoryURL(sd['storyUrl'])
+                if url == surl:
+                    ## matched
+                    retval = adapter.getStorySeriesMetadataOnly(sd)
+                    if retval:
+                        return retval
         ## 5 tries, should be enough if user/pass, totp & is_adult
         ## needed, or a couple tries of one or the other
         retval = None
@@ -1465,7 +1475,8 @@ class FanFicFarePlugin(InterfaceAction):
 
             # let other exceptions percolate up.
             # bgmeta doesn't work with CALIBREONLY.
-            story = self.get_story_metadata_only(adapter)
+            # logger.debug(options.get('frompage'))
+            story = self.get_story_metadata_only(adapter,options)
             bgmeta = False
         else:
             if not bgmeta:
@@ -1486,7 +1497,8 @@ class FanFicFarePlugin(InterfaceAction):
                 ## with QuitDownloadException raised.
                 configuration.set_quit(quit_fn)
 
-                story = self.get_story_metadata_only(adapter)
+                # logger.debug(options.get('frompage'))
+                story = self.get_story_metadata_only(adapter,options)
                 book['title'] = story.getMetadata('title')
                 book['author'] = [story.getMetadata('author')]
                 url = book['url'] = story.getMetadata('storyUrl', removeallentities=True)
@@ -1934,10 +1946,15 @@ class FanFicFarePlugin(InterfaceAction):
         args = ['calibre_plugins.fanficfare_plugin.jobs',
                 'do_download_worker_single',
                 (site, book_list, options, merge)]
-        if site:
-            desc = _('Download %s FanFiction Book(s) for %s') % (sum(1 for x in book_list if x['good']),site)
+        dl_count = sum(1 for x in book_list if x['good'])
+        if dl_count == 1:
+            book = book_list[0]
+            ## Should always have title, but fall back to URL if not.
+            desc = _('Download FanFiction Book (%s)') % (book.get('title') or book['url'])
+        elif site:
+            desc = _('Download %s FanFiction Book(s) for %s') % (dl_count,site)
         else:
-            desc = _('Download %s FanFiction Book(s)') % sum(1 for x in book_list if x['good'])
+            desc = _('Download %s FanFiction Book(s)') % dl_count
 
         job = self.gui.job_manager.run_job(
                 self.Dispatcher(partial(self.download_list_completed,

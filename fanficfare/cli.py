@@ -26,7 +26,7 @@ import string
 import os, sys, platform
 from functools import partial
 
-version="4.62.20"
+version="4.63.4"
 os.environ['CURRENT_VERSION_ID']=version
 
 global_cache = 'global_cache'
@@ -42,6 +42,7 @@ logger = logging.getLogger('fanficfare')
 
 from fanficfare import adapters, writers, exceptions
 from fanficfare.configurable import Configuration
+from fanficfare.fetchers.camoufoxbrowser import cli_browser_session
 from fanficfare.epubutils import (
     get_dcsource_chaptercount, get_update_data, unnew_chapters_epub)
 from fanficfare.geturls import GetURLs
@@ -216,6 +217,10 @@ def validateOptions(parser, options, args):
     if options.unnew and options.format != 'epub':
         parser.error('--unnew only works with epub')
 
+    for opt_name, opt_value in (('--begin', options.begin), ('--end', options.end)):
+        if opt_value is not None and not str(opt_value).isdigit():
+            parser.error('Incorrect arguments: %s must be a chapter number, got %r' % (opt_name, opt_value))
+
     if not options.list_only and not (args or any((options.infile,
                                                    options.downloadimap,
                                                    options.downloadlist))):
@@ -350,7 +355,8 @@ def main(argv=None,
     validateOptions(parser, options, args)
     warn, fail = setup(options)
     urls=args
-    dispatch(options, urls, passed_defaultsini, passed_personalini, warn, fail)
+    with cli_browser_session():
+        dispatch(options, urls, passed_defaultsini, passed_personalini, warn, fail)
 
 # make rest a function and loop on it.
 @do_cprofile
